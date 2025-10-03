@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import './App.css';
+import './styles/App.css';
 import { db } from "./firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import FirestoreTest from "./FirestoreTest";
 import PortalPage from "./PortalPage";
 import DatabasePage from "./DatabasePage";
 import NewRecordPage from "./NewRecordPage";
 import ReportsPage from "./ReportsPage";
+import DashboardPage from "./DashboardPage";
 import ProtectedRoute from "./ProtectedRoute";
 import userIcon from './icons/user.png';
 import passwordIcon from './icons/password.png';
@@ -125,6 +125,14 @@ function App() {
         element={
           <ProtectedRoute>
             <PortalPage onLogout={handleLogout} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage onLogout={handleLogout} />
           </ProtectedRoute>
         }
       />

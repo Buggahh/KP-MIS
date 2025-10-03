@@ -2,10 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { db } from "./firebase";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
-import "./NewRecordPage.css";
+import "./styles/NewRecordPage.css";
 import uploadIcon from './icons/upload.png';
-import printIcon from './icons/print.png';
-import editIcon from './icons/edit.png';
 import submitIcon from './icons/submit.png';
 import { submitNewCase } from "./SubmitCase";
 import { canWriteToFirestore } from "./RoleCheck";
@@ -14,9 +12,7 @@ function NewRecordPage({ onLogout }) {
   const [role, setRole] = useState("");
   const [username, setUsername] = useState(localStorage.getItem("loggedInUsername") || "");
 
-  // Case Status state
-  const [statusDate, setStatusDate] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  // Case Status state options
   const statusOptions = [
     "On Going / Pending",
     "Settled Amicably",
@@ -25,15 +21,6 @@ function NewRecordPage({ onLogout }) {
     "Referred to Other Office",
     "Certificate to File Action"
   ];
-
-  // Repudiated state
-  const [repudiated, setRepudiated] = useState("");
-  const [mainPoint, setMainPoint] = useState("");
-
-  // Execution state
-  const [execution, setExecution] = useState("");
-  const [executionDate, setExecutionDate] = useState("");
-  const [executionReason, setExecutionReason] = useState("");
 
   // Separate state for each proceedings table
   const [mediationRows, setMediationRows] = useState([
@@ -491,10 +478,9 @@ function NewRecordPage({ onLogout }) {
             <div className="header-kp">Management Information Systems (MIS)</div>
           </div>
           <nav className="header-bottom-nav">
-            <Link to="/" className="header-link">Home</Link>
             <Link to="/Dashboard" className="header-link">Dashboard</Link>
             <Link to="/Database" className="header-link">Database</Link>
-            <Link to="/New-Record" className="header-link">New Record</Link>
+            <Link to="/New-Record" className="header-link" style={{color : "#d3000eff"}}>New Record</Link>
             <Link to="/Reports" className="header-link">Reports</Link>
           </nav>
         </div>

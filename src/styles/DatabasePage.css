@@ -1,0 +1,236 @@
+.database-search-wrapper {
+  width: auto;
+  max-width: 100vw;
+  overflow-x: auto;
+  margin: 35px 20px 0 20px;
+  padding: 0 0.5vw;
+  box-sizing: border-box;
+}
+
+.database-search-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  table-layout: auto;
+  padding-right: 10px;
+}
+
+
+.database-search-table td {
+  padding: 8px 8px;
+  font-weight: 500;
+  color: #222;
+  border: none;
+  min-width: 80px;
+}
+
+.database-search-table td:first-child {
+  color: #ed1c26;
+  font-size: 20px;
+  font-weight: 800;
+  min-width: 90px;
+}
+
+.database-search-input {
+  border: 1px solid #222;
+  padding: 7px 8px;
+  width: 100%;
+  min-width: 60px;
+  max-width: 200px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.database-search-input.year {
+  max-width: 70px;
+}
+
+.database-search-input.case-number {
+  max-width: 110px;
+}
+
+.database-search-total-box {
+  border: 1px solid #222;
+  height: 32px;
+  width: 100%;
+  min-width: 60px;
+  box-sizing: border-box;
+}
+
+.database-search-label {
+  text-align: right;
+}
+
+.database-search-name-label {
+  text-align: left;
+  font-size: 12px;
+  color: #222;
+  font-weight: 500;
+  padding-top: 0 !important;
+}
+
+.database-results-wrapper {
+  width: auto;
+  max-width: 100vw;
+  overflow-x: auto;
+  margin: 0 20px 0 20px;
+  padding: 0 0.5vw;
+  box-sizing: border-box;
+}
+
+.database-results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-left: 0;
+}
+
+.database-results-label {
+  text-align: right;
+  font-weight: 500;
+  color: #222;
+  font-size: 15px;
+  padding-right: 8px;
+}
+
+.database-results-input {
+  border: 1px solid #222;
+  height: 32px;
+  width: 100px;
+  font-size: 16px;
+  padding: 4px 8px;
+  box-sizing: border-box;
+}
+
+.database-results-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  vertical-align: bottom;
+  padding: 0 12px;
+}
+
+.results-action-icon {
+  display: block;
+  font-size: 32px;
+  margin-bottom: 2px;
+  height: 44px;
+  width: 44px;
+  object-fit: contain;
+}
+
+.results-action-label {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ed1c26;
+  line-height: 1.1;
+  text-align: left;
+  letter-spacing: 0.5px;
+  white-space: pre-line;
+}
+
+.database-results-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin: 20px 0 0 0;
+  width: 100%;
+}
+
+.database-results-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.database-results-title {
+  margin-right: 90px;
+}
+
+.database-results-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 48px;
+}
+
+.database-results-table-container {
+  margin: 24px 0 0 0;
+  max-width: 100%;
+  height: 300px;
+  overflow: auto;
+  border: 3px solid #000000;
+  background: #fff;
+  padding: 15px;
+}
+
+.database-results-table-list {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0px 8px; /* gap between header and rows */
+  min-width: 900px;
+}
+
+.database-results-table-list th,
+.database-results-table-list td {
+  padding: 10px 12px;
+  border: 2px solid #222;
+  text-align: left;
+  font-size: 15px;
+  background: #fff;
+}
+
+.database-results-table-list th {
+  background: #f7f7f7;
+  font-weight: 700;
+  color: #222;
+  /* position: sticky; */
+  top: 0;
+  z-index: 1;
+}
+
+.tag-cell {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.tag-cell.selected {
+  background: #bbbdc0 !important;
+}
+
+@media (max-width: 900px) {
+  .database-search-table {
+    min-width: 600px;
+  }
+  .database-search-table td {
+    font-size: 13px;
+    min-width: 50px;
+    padding: 6px 2px;
+  }
+  .database-search-input,
+  .database-search-total-box {
+    min-width: 40px;
+    max-width: 80px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 600px) {
+  .database-search-wrapper {
+    padding: 0 2px;
+  }
+  .database-search-table {
+    min-width: 400px;
+  }
+  .database-search-table td {
+    font-size: 11px;
+    min-width: 30px;
+    padding: 4px 1px;
+  }
+  .database-search-input,
+  .database-search-total-box {
+    min-width: 30px;
+    max-width: 60px;
+    font-size: 11px;
+  }
+}

@@ -147,7 +147,7 @@ body {
   width: 100%;
   background: #976530;
   color: #fff;
-  position: fixed;
+  position: aboslute;
   top: 0;
   left: 0;
   z-index: 200;
@@ -268,11 +268,6 @@ body {
 
 .header-link:hover {
   text-decoration: underline;
-}
-
-/* Add padding to main content to avoid header overlap */
-body, .App {
-  padding-top: 110px; /* Adjust based on header height */
 }
 
 
