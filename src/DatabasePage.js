@@ -155,12 +155,11 @@ function DatabasePage({ onLogout }) {
                   type="text"
                   className="database-results-input"
                   readOnly
+                  tabIndex={-1}
                   value={""} // Replace with your actual count
                 />
               </td>
             </tr>
-
-            {/* Labels under Name of Party fields */}
             <tr>
               <td colSpan={6}></td>
               <td className="database-search-name-label">Lastname</td>
@@ -183,6 +182,7 @@ function DatabasePage({ onLogout }) {
               type="text"
               className="database-results-input"
               readOnly
+              tabIndex={-1}
               value={""} // Replace with your actual count
             />
           </div>
@@ -212,7 +212,7 @@ function DatabasePage({ onLogout }) {
         <div className="database-results-table-container">
           <table className="database-results-table-list">
             <thead>
-              <tr classname="TEST">
+              <tr>
                 <th>Year</th>
                 <th>Case Number</th>
                 <th>Party</th>
@@ -221,7 +221,13 @@ function DatabasePage({ onLogout }) {
                 <th>Offense/Violation</th>
                 <th>Status</th>
                 <th>Date</th>
+                <th className="spacer-header"></th>
                 <th className="tag-header">Tag</th>
+              </tr>
+              <tr className="header-gap-row">
+                <td style={{height: "5px", borderLeft: "none", borderRight: "none", background: "#fff"}} colSpan={8}></td>
+                <td className="spacer-gap" style={{height: "5px", borderTop: "none", borderBottom: "none", background: "#fff"}}></td>
+                <td style={{height: "5px", borderLeft: "none", borderRight: "none", background: "#fff"}}></td>
               </tr>
             </thead>
             <tbody>
@@ -235,6 +241,7 @@ function DatabasePage({ onLogout }) {
                   <td>{row.offense}</td>
                   <td>{row.status}</td>
                   <td>{row.date}</td>
+                  <td className="spacer-cell"></td>
                   <td
                     className={`tag-cell${selectedTagRow === idx ? " selected" : ""}`}
                     onClick={() => setSelectedTagRow(idx)}
