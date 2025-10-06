@@ -4,6 +4,7 @@ import "./styles/DatabasePage.css";
 import printIcon from "./icons/print.png";
 import openIcon from "./icons/open.png";
 import deleteIcon from "./icons/delete.png";
+import { DatabaseSearch } from "./DatabaseSearch";
 
 function DatabasePage({ onLogout }) {
   const [username] = useState(localStorage.getItem("loggedInUsername") || "");
@@ -94,6 +95,9 @@ function DatabasePage({ onLogout }) {
     // ...more rows
   ];
 
+  // Use the custom search hook
+  const { year, setYear, filteredRows } = DatabaseSearch(rows);
+
   return (
     <>
       {/* Header */}
@@ -138,7 +142,14 @@ function DatabasePage({ onLogout }) {
               <td className="section-title">SEARCH</td>
 
               <td className="database-search-label">Year:</td>
-              <td><input type="text" className="database-search-input year" /></td>
+              <td>
+                <input
+                  type="text"
+                  className="database-search-input year"
+                  value={year}
+                  onChange={e => setYear(e.target.value)}
+                />
+              </td>
 
               <td className="database-search-label">Case Number:</td>
               <td><input type="text" className="database-search-input case-number" /></td>
@@ -231,7 +242,7 @@ function DatabasePage({ onLogout }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, idx) => (
+              {filteredRows.map((row, idx) => (
                 <tr key={idx}>
                   <td>{row.year}</td>
                   <td>{row.caseNumber}</td>
