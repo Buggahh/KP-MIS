@@ -4,99 +4,59 @@ import "./styles/DatabasePage.css";
 import printIcon from "./icons/print.png";
 import openIcon from "./icons/open.png";
 import deleteIcon from "./icons/delete.png";
-import { DatabaseSearch } from "./DatabaseSearch";
+import { useDatabaseSearch } from "./DatabaseSearch";
+import { DatabaseDeleteRecord } from "./DatabaseDeleteRecord";
 
 function DatabasePage({ onLogout }) {
   const [username] = useState(localStorage.getItem("loggedInUsername") || "");
   const [selectedTagRow, setSelectedTagRow] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [notification, setNotification] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Example data
-  const rows = [
-    {
-      year: "2025",
-      caseNumber: "001",
-      party: "Complainant",
-      name: "FERNANDEZ, RAYMUND",
-      nature: "Noise Disturbance",
-      offense: "Ordinance Violation",
-      status: "Open",
-      date: "2025-10-03",
-    },
-    {
-      year: "2025",
-      caseNumber: "001",
-      party: "Complainant",
-      name: "FERNANDEZ, RAYMUND",
-      nature: "Noise Disturbance",
-      offense: "Ordinance Violation",
-      status: "Open",
-      date: "2025-10-03",
-    },
-    {
-      year: "2025",
-      caseNumber: "001",
-      party: "Complainant",
-      name: "FERNANDEZ, RAYMUND",
-      nature: "Noise Disturbance",
-      offense: "Ordinance Violation",
-      status: "Open",
-      date: "2025-10-03",
-    },
-    {
-      year: "2025",
-      caseNumber: "001",
-      party: "Complainant",
-      name: "FERNANDEZ, RAYMUND",
-      nature: "Noise Disturbance",
-      offense: "Ordinance Violation",
-      status: "Open",
-      date: "2025-10-03",
-    },
-    {
-      year: "2025",
-      caseNumber: "001",
-      party: "Complainant",
-      name: "FERNANDEZ, RAYMUND",
-      nature: "Noise Disturbance",
-      offense: "Ordinance Violation",
-      status: "Open",
-      date: "2025-10-03",
-    },
-    {
-      year: "2025",
-      caseNumber: "001",
-      party: "Complainant",
-      name: "FERNANDEZ, RAYMUND",
-      nature: "Noise Disturbance",
-      offense: "Ordinance Violation",
-      status: "Open",
-      date: "2025-10-03",
-    },
-    {
-      year: "2025",
-      caseNumber: "001",
-      party: "Complainant",
-      name: "FERNANDEZ, RAYMUND",
-      nature: "Noise Disturbance",
-      offense: "Ordinance Violation",
-      status: "Open",
-      date: "2025-10-03",
-    },
-    {
-      year: "2025",
-      caseNumber: "001",
-      party: "Complainant",
-      name: "FERNANDEZ, RAYMUND",
-      nature: "Noise Disturbance",
-      offense: "Ordinance Violation",
-      status: "Open",
-      date: "2025-10-03",
-    },
-    // ...more rows
-  ];
+  const {
+    year,
+    setYear,
+    caseNumber,
+    setCaseNumber,
+    lastname,
+    setLastname,
+    firstname,
+    setFirstname,
+    middlename,
+    setMiddlename,
+    extension,
+    setExtension,
+    filteredRows,
+    loading,
+    totalRecords,
+  } = useDatabaseSearch(refreshKey);
 
-  // Use the custom search hook
-  const { year, setYear, filteredRows } = DatabaseSearch(rows);
+  // Show confirmation modal
+  const handleDeleteClick = () => {
+    if (selectedTagRow !== null && filteredRows[selectedTagRow]) {
+      setShowConfirm(true);
+    }
+  };
+
+  // Delete record after confirmation
+  const handleConfirmDelete = async () => {
+    const selectedCaseId = filteredRows[selectedTagRow]?.caseNumber; // Use caseNumber as caseId
+    if (selectedCaseId) {
+      const success = await DatabaseDeleteRecord(selectedCaseId); // Pass caseId, not tag
+      if (success) {
+        setNotification("Record deleted successfully!");
+        setTimeout(() => setNotification(""), 3000);
+        setRefreshKey(prev => prev + 1); // Trigger refresh
+      }
+    }
+    setShowConfirm(false);
+  };
+
+  // Cancel delete
+  const handleCancelDelete = () => {
+    setShowConfirm(false);
+  };
 
   return (
     <>
@@ -140,7 +100,6 @@ function DatabasePage({ onLogout }) {
           <tbody>
             <tr>
               <td className="section-title">SEARCH</td>
-
               <td className="database-search-label">Year:</td>
               <td>
                 <input
@@ -150,16 +109,48 @@ function DatabasePage({ onLogout }) {
                   onChange={e => setYear(e.target.value)}
                 />
               </td>
-
               <td className="database-search-label">Case Number:</td>
-              <td><input type="text" className="database-search-input case-number" /></td>
-
+              <td>
+                <input
+                  type="text"
+                  className="database-search-input case-number"
+                  value={caseNumber}
+                  onChange={e => setCaseNumber(e.target.value)}
+                />
+              </td>
               <td className="database-search-label">Name of Party:</td>
-              <td><input type="text" className="database-search-input" /></td>
-              <td><input type="text" className="database-search-input" /></td>
-              <td><input type="text" className="database-search-input" /></td>
-              <td><input type="text" className="database-search-input" /></td>
-
+              <td>
+                <input
+                  type="text"
+                  className="database-search-input"
+                  value={lastname}
+                  onChange={e => setLastname(e.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  className="database-search-input"
+                  value={firstname}
+                  onChange={e => setFirstname(e.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  className="database-search-input"
+                  value={middlename}
+                  onChange={e => setMiddlename(e.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  className="database-search-input"
+                  value={extension}
+                  onChange={e => setExtension(e.target.value)}
+                />
+              </td>
               <td className="database-search-label">Total Number of Records:</td>
               <td>
                 <input
@@ -167,7 +158,7 @@ function DatabasePage({ onLogout }) {
                   className="database-results-input"
                   readOnly
                   tabIndex={-1}
-                  value={""} // Replace with your actual count
+                  value={totalRecords}
                 />
               </td>
             </tr>
@@ -183,6 +174,77 @@ function DatabasePage({ onLogout }) {
         </table>
       </div>
 
+      {/* Notification */}
+      {notification && (
+        <div style={{
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          background: "#4BB543",
+          color: "#fff",
+          padding: "16px 24px",
+          borderRadius: "8px",
+          zIndex: 1000,
+          fontWeight: "bold",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+        }}>
+          {notification}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.3)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1001
+        }}>
+          <div style={{
+            background: "#fff",
+            padding: "32px",
+            borderRadius: "12px",
+            boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
+            minWidth: "320px",
+            textAlign: "center"
+          }}>
+            <div style={{ marginBottom: "18px", fontWeight: "bold", fontSize: "18px" }}>
+              Are you sure you want to delete this record?
+            </div>
+            <button
+              style={{
+                background: "#4BB543",
+                color: "#fff",
+                border: "none",
+                padding: "8px 18px",
+                borderRadius: "6px",
+                marginRight: "12px",
+                cursor: "pointer"
+              }}
+              onClick={handleConfirmDelete}
+            >
+              Yes
+            </button>
+            <button
+              style={{
+                background: "#ed1c26",
+                color: "#fff",
+                border: "none",
+                padding: "8px 18px",
+                borderRadius: "6px",
+                cursor: "pointer"
+              }}
+              onClick={handleCancelDelete}
+            >
+              No
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Results Row */}
       <div className="database-results-wrapper">
         <div className="database-results-row">
@@ -194,7 +256,7 @@ function DatabasePage({ onLogout }) {
               className="database-results-input"
               readOnly
               tabIndex={-1}
-              value={""} // Replace with your actual count
+              value={filteredRows.length}
             />
           </div>
           <div className="database-results-actions">
@@ -210,7 +272,11 @@ function DatabasePage({ onLogout }) {
                 OPEN<br />RECORD
               </span>
             </div>
-            <div className="database-results-action">
+            <div
+              className="database-results-action"
+              onClick={handleDeleteClick}
+              style={{ cursor: "pointer" }}
+            >
               <img src={deleteIcon} alt="Delete" className="results-action-icon" />
               <span className="results-action-label delete">
                 DELETE<br />RECORD
@@ -221,48 +287,52 @@ function DatabasePage({ onLogout }) {
 
         {/* Results Table */}
         <div className="database-results-table-container">
-          <table className="database-results-table-list">
-            <thead>
-              <tr>
-                <th>Year</th>
-                <th>Case Number</th>
-                <th>Party</th>
-                <th>Name</th>
-                <th>Nature of Complaint</th>
-                <th>Offense/Violation</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th className="spacer-header"></th>
-                <th className="tag-header">Tag</th>
-              </tr>
-              <tr className="header-gap-row">
-                <td style={{height: "5px", borderLeft: "none", borderRight: "none", background: "#fff"}} colSpan={8}></td>
-                <td className="spacer-gap" style={{height: "5px", borderTop: "none", borderBottom: "none", background: "#fff"}}></td>
-                <td style={{height: "5px", borderLeft: "none", borderRight: "none", background: "#fff"}}></td>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRows.map((row, idx) => (
-                <tr key={idx}>
-                  <td>{row.year}</td>
-                  <td>{row.caseNumber}</td>
-                  <td>{row.party}</td>
-                  <td>{row.name}</td>
-                  <td>{row.nature}</td>
-                  <td>{row.offense}</td>
-                  <td>{row.status}</td>
-                  <td>{row.date}</td>
-                  <td className="spacer-cell"></td>
-                  <td
-                    className={`tag-cell${selectedTagRow === idx ? " selected" : ""}`}
-                    onClick={() => setSelectedTagRow(idx)}
-                  >
-                    {row.tag}
-                  </td>
+          {loading ? (
+            <div>Loading Database</div>
+          ) : (
+            <table className="database-results-table-list">
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th>Case Number</th>
+                  <th>Party</th>
+                  <th>Name</th>
+                  <th>Nature of Complaint</th>
+                  <th>Offense/Violation</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th className="spacer-header"></th>
+                  <th className="tag-header">Tag</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                <tr className="header-gap-row">
+                  <td style={{height: "5px", borderLeft: "none", borderRight: "none", background: "#fff"}} colSpan={8}></td>
+                  <td className="spacer-gap" style={{height: "5px", borderTop: "none", borderBottom: "none", background: "#fff"}}></td>
+                  <td style={{height: "5px", borderLeft: "none", borderRight: "none", background: "#fff"}}></td>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row, idx) => (
+                  <tr key={idx}>
+                    <td>{row.year}</td>
+                    <td>{row.caseNumber}</td>
+                    <td>{row.party}</td>
+                    <td>{row.name}</td>
+                    <td>{row.nature}</td>
+                    <td>{row.offense}</td>
+                    <td>{row.status}</td>
+                    <td>{row.date}</td>
+                    <td className="spacer-cell"></td>
+                    <td
+                      className={`tag-cell${selectedTagRow === idx ? " selected" : ""}`}
+                      onClick={() => setSelectedTagRow(idx)}
+                    >
+                      {row.tag}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

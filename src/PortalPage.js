@@ -55,7 +55,6 @@ function PortalPage({ onLogout }) {
             <div className="header-kp">Management Information Systems (MIS)</div>
           </div>
           <nav className="header-bottom-nav">
-            <Link to="/" className="header-link">Home</Link>
             <Link to="/Dashboard" className="header-link" >Dashboard</Link>
             <Link to="/Database" className="header-link">Database</Link>
             <Link to="/New-Record" className="header-link">New Record</Link>
