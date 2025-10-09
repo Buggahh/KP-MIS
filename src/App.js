@@ -8,6 +8,7 @@ import DatabasePage from "./DatabasePage";
 import NewRecordPage from "./NewRecordPage";
 import ReportsPage from "./ReportsPage";
 import DashboardPage from "./DashboardPage";
+import ViewRecordPage from "./ViewRecordPage";
 import ProtectedRoute from "./ProtectedRoute";
 import userIcon from './icons/user.png';
 import passwordIcon from './icons/password.png';
@@ -157,6 +158,14 @@ function App() {
         element={
           <ProtectedRoute>
             <ReportsPage onLogout={handleLogout} />
+          </ProtectedRoute>
+        }
+      />
+      <Route 
+        path="/ViewRecord/:caseNumber" 
+        element={
+          <ProtectedRoute>
+              <ViewRecordPage onLogout={handleLogout} />
           </ProtectedRoute>
         }
       />

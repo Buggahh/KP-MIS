@@ -39,8 +39,8 @@ export function useDatabaseSearch(refreshKey = 0) {
             if (!statusSnapshot.empty) {
               const sortedStatuses = statusSnapshot.docs
                 .map(s => ({ id: s.id, ...s.data() }))
-                .sort((a, b) => (b.statusDate || "").localeCompare(a.statusDate || ""));
-              const latest = sortedStatuses[0];
+                .sort((a, b) => a.id.localeCompare(b.id));
+              const latest = sortedStatuses[sortedStatuses.length - 1];
               latestStatus = latest?.status || "";
             }
 

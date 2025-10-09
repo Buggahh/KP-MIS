@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./styles/DatabasePage.css";
 import printIcon from "./icons/print.png";
 import openIcon from "./icons/open.png";
@@ -13,6 +13,8 @@ function DatabasePage({ onLogout }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [notification, setNotification] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
 
   const {
     year,
@@ -41,15 +43,17 @@ function DatabasePage({ onLogout }) {
 
   // Delete record after confirmation
   const handleConfirmDelete = async () => {
-    const selectedCaseId = filteredRows[selectedTagRow]?.caseNumber; // Use caseNumber as caseId
+    setDeleting(true);
+    const selectedCaseId = filteredRows[selectedTagRow]?.caseNumber;
     if (selectedCaseId) {
-      const success = await DatabaseDeleteRecord(selectedCaseId); // Pass caseId, not tag
+      const success = await DatabaseDeleteRecord(selectedCaseId);
       if (success) {
         setNotification("Record deleted successfully!");
-        setTimeout(() => setNotification(""), 3000);
-        setRefreshKey(prev => prev + 1); // Trigger refresh
+        setTimeout(() => setNotification(""), 1000);
+        setRefreshKey(prev => prev + 1);
       }
     }
+    setDeleting(false);
     setShowConfirm(false);
   };
 
@@ -211,36 +215,48 @@ function DatabasePage({ onLogout }) {
             minWidth: "320px",
             textAlign: "center"
           }}>
-            <div style={{ marginBottom: "18px", fontWeight: "bold", fontSize: "18px" }}>
-              Are you sure you want to delete this record?
-            </div>
-            <button
-              style={{
-                background: "#4BB543",
-                color: "#fff",
-                border: "none",
-                padding: "8px 18px",
-                borderRadius: "6px",
-                marginRight: "12px",
-                cursor: "pointer"
-              }}
-              onClick={handleConfirmDelete}
-            >
-              Yes
-            </button>
-            <button
-              style={{
-                background: "#ed1c26",
-                color: "#fff",
-                border: "none",
-                padding: "8px 18px",
-                borderRadius: "6px",
-                cursor: "pointer"
-              }}
-              onClick={handleCancelDelete}
-            >
-              No
-            </button>
+            {deleting ? (
+              <div>
+                <div style={{ marginBottom: "12px", fontWeight: "bold", fontSize: "18px" }}>
+                  Deleting record, please wait...
+                </div>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: "12px", fontWeight: "bold", fontSize: "18px" }}>
+                  Are you sure you want to delete this record?
+                </div>
+                <button
+                  style={{
+                    background: "#4BB543",
+                    color: "#fff",
+                    border: "none",
+                    padding: "8px 18px",
+                    borderRadius: "6px",
+                    marginRight: "12px",
+                    cursor: "pointer"
+                  }}
+                  onClick={handleConfirmDelete}
+                  disabled={deleting}
+                >
+                  Yes
+                </button>
+                <button
+                  style={{
+                    background: "#ed1c26",
+                    color: "#fff",
+                    border: "none",
+                    padding: "8px 18px",
+                    borderRadius: "6px",
+                    cursor: "pointer"
+                  }}
+                  onClick={handleCancelDelete}
+                  disabled={deleting}
+                >
+                  No
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -266,7 +282,15 @@ function DatabasePage({ onLogout }) {
                 PRINT<br />LIST
               </span>
             </div>
-            <div className="database-results-action">
+            <div
+              className="database-results-action"
+              style={{ cursor: selectedTagRow !== null ? "pointer" : "not-allowed", opacity: selectedTagRow !== null ? 1 : 0.5 }}
+              onClick={() => {
+                if (selectedTagRow !== null && filteredRows[selectedTagRow]) {
+                  navigate(`/ViewRecord/${filteredRows[selectedTagRow].caseNumber}`);
+                }
+              }}
+            >
               <img src={openIcon} alt="Open" className="results-action-icon" />
               <span className="results-action-label open">
                 OPEN<br />RECORD

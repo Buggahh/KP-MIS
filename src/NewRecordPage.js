@@ -7,6 +7,7 @@ import uploadIcon from './icons/upload.png';
 import submitIcon from './icons/submit.png';
 import { submitNewCase } from "./SubmitCase";
 import { canWriteToFirestore } from "./RoleCheck";
+import { uploadFile } from "./FileUploadUtil";
 
 function NewRecordPage({ onLogout }) {
   const [role, setRole] = useState("");
@@ -266,6 +267,13 @@ function NewRecordPage({ onLogout }) {
     { date: "", time: "", remarks: "" }
   ];
 
+  const handleOpenUpload = (type) => {
+  setUploadType(type);
+  setShowUploadModal(true);
+  setUploadError("");
+  setUploadedUrl("");
+};
+
   // Submit handler for the sticky submit button
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -377,6 +385,25 @@ function NewRecordPage({ onLogout }) {
     const caseDocSnap = await getDoc(caseDocRef);
     return caseDocSnap.exists();
   }
+
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadType, setUploadType] = useState(""); // e.g., "complaintSheet"
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [uploadedUrl, setUploadedUrl] = useState("");
+
+  const handleFileUpload = async (file) => {
+    setUploading(true);
+    setUploadError("");
+    try {
+      const url = await uploadFile(file, uploadType);
+      setUploadedUrl(url);
+      // Save the url to your case state if needed
+    } catch (err) {
+      setUploadError("Upload failed: " + err.message);
+    }
+    setUploading(false);
+  };
 
   return (
     <div>
@@ -1351,23 +1378,51 @@ function NewRecordPage({ onLogout }) {
       </div>
 
       {/* Uploads */}
-      <div className="newrecord-main-content">
+      <div className="newrecord-main-content" style = {{ marginBottom: "70px" }}>
         <h1 style={{ color: 'red' }}>Uploads</h1>
         <ul className="uploads-list">
           <li>
-            <img src={uploadIcon} alt="Upload File" className="upload-icon" style={{ cursor: "pointer" }} tabIndex={0} />
+            <img
+              src={uploadIcon}
+              alt="Upload File"
+              className="upload-icon"
+              style={{ cursor: "pointer" }}
+              tabIndex={0}
+              onClick={() => handleOpenUpload("complaintSheet")}
+            />
             <span className="upload-label">Complaint Sheet</span>
           </li>
           <li>
-            <img src={uploadIcon} alt="Upload File" className="upload-icon" style={{ cursor: "pointer" }} tabIndex={0} />
+            <img
+              src={uploadIcon}
+              alt="Upload File"
+              className="upload-icon"
+              style={{ cursor: "pointer" }}
+              tabIndex={0}
+              onClick={() => handleOpenUpload("amicableSettlement")}
+            />
             <span className="upload-label">Amicable Settlement</span>
           </li>
           <li>
-            <img src={uploadIcon} alt="Upload File" className="upload-icon" style={{ cursor: "pointer" }} tabIndex={0} />
+            <img
+              src={uploadIcon}
+              alt="Upload File"
+              className="upload-icon"
+              style={{ cursor: "pointer" }}
+              tabIndex={0}
+              onClick={() => handleOpenUpload("certificateToFileAction")}
+            />
             <span className="upload-label">Certificate to File Action</span>
           </li>
           <li>
-            <img src={uploadIcon} alt="Upload File" className="upload-icon" style={{ cursor: "pointer" }} tabIndex={0} />
+            <img
+              src={uploadIcon}
+              alt="Upload File"
+              className="upload-icon"
+              style={{ cursor: "pointer" }}
+              tabIndex={0}
+              onClick={() => handleOpenUpload("photo")}
+            />
             <span className="upload-label">Photo</span>
           </li>
         </ul>
@@ -1379,6 +1434,67 @@ function NewRecordPage({ onLogout }) {
           <span>SUBMIT</span>
         </button>
       </div>
+
+      {showUploadModal && (
+  <div style={{
+    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+    background: "rgba(0,0,0,0.4)", zIndex: 9999,
+    display: "flex", alignItems: "center", justifyContent: "center"
+  }}>
+    <div style={{
+      background: "#fff", borderRadius: "12px", padding: "32px 40px",
+      minWidth: "340px", minHeight: "220px", boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
+      display: "flex", flexDirection: "column", alignItems: "center"
+    }}>
+      <h2 style={{marginBottom: 16}}>Upload {uploadType.replace(/([A-Z])/g, ' $1')}</h2>
+      <div
+        style={{
+          border: "2px dashed #bbb", borderRadius: "8px", width: 260, height: 120,
+          display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16,
+          background: "#fafafa", cursor: "pointer"
+        }}
+        onDragOver={e => e.preventDefault()}
+        onDrop={async e => {
+          e.preventDefault();
+          if (e.dataTransfer.files.length) {
+            await handleFileUpload(e.dataTransfer.files[0]);
+          }
+        }}
+        onClick={() => document.getElementById("file-upload-input").click()}
+      >
+        <span style={{color: "#888"}}>Drag & drop file here<br />or click to select</span>
+        <input
+          id="file-upload-input"
+          type="file"
+          accept="image/*,.pdf"
+          style={{display: "none"}}
+          onChange={async e => {
+            if (e.target.files.length) {
+              await handleFileUpload(e.target.files[0]);
+            }
+          }}
+        />
+      </div>
+      {uploading && <div style={{marginBottom: 8}}>Uploading...</div>}
+      {uploadError && <div style={{color: "#e74c3c", marginBottom: 8}}>{uploadError}</div>}
+      {uploadedUrl && (
+        <div style={{color: "#27ae60", marginBottom: 8}}>
+          Uploaded! <a href={uploadedUrl} target="_blank" rel="noopener noreferrer">View File</a>
+        </div>
+      )}
+      <button
+        style={{
+          marginTop: 8, background: "#ed1c26", color: "#fff", border: "none",
+          padding: "8px 18px", borderRadius: "6px", cursor: "pointer"
+        }}
+        onClick={() => setShowUploadModal(false)}
+        disabled={uploading}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
