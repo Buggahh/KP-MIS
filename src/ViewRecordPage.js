@@ -196,6 +196,21 @@ function ViewRecordPage({ onLogout }) {
       ]
     }));
   };
+  
+    const caseStatusArr = isEditing ? editData.caseStatusRows : caseStatusRows;
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    // Log all selectedStatus and status for caseStatusArr
+    caseStatusArr.forEach((row, idx) => {
+      console.log(
+        `Case Status Row ${idx}: selectedStatus = ${row.selectedStatus}, status = ${row.status}`
+      );
+    });
+  }, 10000); // 10 seconds
+
+  return () => clearInterval(interval);
+}, [caseStatusArr]);
 
   if (!caseData) return <div>Loading...</div>;
 
@@ -206,7 +221,7 @@ function ViewRecordPage({ onLogout }) {
   const mediationArr = isEditing ? editData.mediationRows : mediationRows;
   const conciliationArr = isEditing ? editData.conciliationRows : conciliationRows;
   const arbitrationArr = isEditing ? editData.arbitrationRows : arbitrationRows;
-  const caseStatusArr = isEditing ? editData.caseStatusRows : caseStatusRows;
+
   const ammicableArr = isEditing ? editData.ammicableRows : ammicableRows;
 
   return (
@@ -619,7 +634,7 @@ function ViewRecordPage({ onLogout }) {
                     ) : (
                       <span>{c.email}</span>
                     )}
-                    {idx === complainants.length - 1 && isEditing && (
+                    {idx === complainantArr.length - 1 && isEditing && (
                       <button
                         className="newrecord-add-btn add-btn-absolute"
                         type="button"
@@ -628,7 +643,9 @@ function ViewRecordPage({ onLogout }) {
                             ...prev,
                             complainants: [
                               ...prev.complainants,
-                              { lastName: "", firstName: "", middleName: "", extension: "", sex: "", birthDate: "", province: "", cityMunicipality: "", barangay: "", addressSpecific: "", contactNo: "", email: "" }
+                              {
+                                lastName: "", firstName: "", middleName: "", extension: "", sex: "", birthDate: "", province: "", cityMunicipality: "", barangay: "", addressSpecific: "", contactNo: "", email: ""
+                              }
                             ]
                           }));
                         }}
@@ -839,7 +856,7 @@ function ViewRecordPage({ onLogout }) {
                     ) : (
                       <span>{c.email}</span>
                     )}
-                    {idx === respondents.length - 1 && isEditing && (
+                    {idx === respondentArr.length - 1 && isEditing && (
                       <button
                         className="newrecord-add-btn add-btn-absolute"
                         type="button"
@@ -866,7 +883,7 @@ function ViewRecordPage({ onLogout }) {
 
       {/* Case Management - Mediation Proceedings */}
       <div className="newrecord-main-content">
-        <h1 style={{ color: 'red' }}>Case Management</h1>
+        <h1 style={{ color: 'red' }}>Case Management - Mediation</h1>
         <div className="newrecord-table-row">
           <table className="newrecord-table">
             <tbody>
@@ -1081,206 +1098,298 @@ function ViewRecordPage({ onLogout }) {
       </div>
       
       {/* Case Status - Section */}
-      <div className="newrecord-main-content" >
-        <h1 style={{ color: 'red' }}>Case Status</h1>
-        {caseStatusArr.map((row, idx) => (
-          <div key={row.id || idx} style={{ position: idx === caseStatusArr.length - 1 ? "relative" : "static", marginBottom: "40px" }}>
-            <div className="newrecord-table-row">
-              <table className="case-status-table">
-                <tbody>
-                  <tr>
-                    <td className="case-status-cell" style={{fontWeight: 600,  width: 220}}>
-                      Date:&nbsp;
-                      {isEditing ? (
-                        <input
-                          type="date"
-                          value={row.statusDate}
-                          onChange={e => handleCaseStatusChange(idx, "statusDate", e.target.value)}
-                          className="case-status-input"
-                          style={{ width: "70%" }}
-                        />
-                      ) : (
-                        <span>{row.statusDate}</span>
-                      )}
-                    </td>
-                    {statusOptions.map(option => (
+      <div className="newrecord-main-content">
+        <h1 style={{ color: "red" }}>Case Status</h1>
+
+        {caseStatusArr.length === 0 && <div>No case status information.</div>}
+
+        {caseStatusArr.map((row, idx) => {
+          // Safely initialize selectedStatus (without mutating the original array)
+          const selectedStatus = row.selectedStatus ?? row.status ?? "";
+          const currentStatus = selectedStatus;
+
+          return (
+            <div
+              key={row.id || idx}
+              style={{
+                position: idx === caseStatusArr.length - 1 ? "relative" : "static",
+                marginBottom: "40px",
+              }}
+            >
+              <div className="newrecord-table-row">
+                <table className="case-status-table">
+                  <tbody>
+                    <tr>
                       <td
-                        key={option}
-                        className={`case-status-cell status-btn${(row.status || row.selectedStatus) === option ? " selected" : ""}`}
-                        {...(isEditing ? {
-                          onClick: () => handleCaseStatusChange(idx, "selectedStatus", option),
-                          style: { textAlign: "center", cursor: "pointer" }
-                        } : {
-                          style: { textAlign: "center", cursor: "default" }
-                        })}
+                        className="case-status-cell"
+                        style={{ fontWeight: 600, width: 220 }}
                       >
-                        {option}
+                        Date:&nbsp;
+                        {isEditing ? (
+                          <input
+                            type="date"
+                            value={row.statusDate || ""}
+                            onChange={(e) =>
+                              handleCaseStatusChange(idx, "statusDate", e.target.value)
+                            }
+                            className="case-status-input"
+                            style={{ width: "70%" }}
+                          />
+                        ) : (
+                          <span>{row.statusDate}</span>
+                        )}
                       </td>
-                    ))}
-                    {isEditing && idx === caseStatusArr.length - 1 && (
-                      <td>
-                        <button
-                          className="newrecord-add-btn"
-                          style={{ marginRight: "10%" }}
-                          onClick={handleAddCaseStatus}
-                          type="button"
+
+                      {/* Status Options (e.g., Pending, Settled, etc.) */}
+                      {statusOptions.map((option) => (
+                        <td
+                          key={option}
+                          className={`case-status-cell status-btn${
+                            currentStatus === option ? " selected" : ""
+                          }`}
+                          style={{
+                            textAlign: "center",
+                            cursor: isEditing ? "pointer" : "default",
+                          }}
+                          onClick={() => {
+                            if (isEditing) {
+                              handleCaseStatusChange(idx, "selectedStatus", option);
+                              handleCaseStatusChange(idx, "status", option);
+                            }
+                          }}
                         >
-                          + ADD
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                </tbody>
-              </table>
+                          {option}
+                        </td>
+                      ))}
+
+                      {/* + ADD button - only appears on last row while editing */}
+                      {isEditing && idx === caseStatusArr.length - 1 && (
+                        <td>
+                          <button
+                            className="newrecord-add-btn"
+                            style={{ marginRight: "10%" }}
+                            onClick={handleAddCaseStatus}
+                            type="button"
+                          >
+                            + ADD
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Repudiated and Execution tables (visible only if Settled Amicably) */}
+              {currentStatus === "Settled Amicably" && (
+                <>
+                  {/* Repudiated Table */}
+                  <table className="case-status-table">
+                    <tbody>
+                      <tr>
+                        <td
+                          className="case-status-cell"
+                          style={{ fontWeight: 600, background: "#f8f8f8" }}
+                        >
+                          <span>{currentStatus}</span>
+                        </td>
+                        <td
+                          className="case-status-cell"
+                          style={{
+                            fontWeight: 600,
+                            borderBottomColor: "#ffffff",
+                          }}
+                        >
+                          Main Point of Agreement/Award:
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          className="case-status-cell"
+                          style={{ fontWeight: 600, width: 220 }}
+                        >
+                          Repudiated?&nbsp;
+                          {isEditing ? (
+                            <>
+                              <span
+                                className={`pill-radio${
+                                  row.repudiated === "Yes" ? " selected" : ""
+                                }`}
+                                onClick={() =>
+                                  handleCaseStatusChange(idx, "repudiated", "Yes")
+                                }
+                              >
+                                Yes
+                              </span>
+                              <span style={{ margin: "0 8px" }}>or</span>
+                              <span
+                                className={`pill-radio${
+                                  row.repudiated === "No" ? " selected" : ""
+                                }`}
+                                onClick={() =>
+                                  handleCaseStatusChange(idx, "repudiated", "No")
+                                }
+                              >
+                                No
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span
+                                className={`pill-radio${
+                                  row.repudiated === "Yes" ? " selected" : ""
+                                }`}
+                                style={{ cursor: "default" }}
+                              >
+                                Yes
+                              </span>
+                              <span style={{ margin: "0 8px" }}>or</span>
+                              <span
+                                className={`pill-radio${
+                                  row.repudiated === "No" ? " selected" : ""
+                                }`}
+                                style={{ cursor: "default" }}
+                              >
+                                No
+                              </span>
+                            </>
+                          )}
+                        </td>
+                        <td
+                          className="case-status-cell"
+                          style={{ verticalAlign: "top", paddingTop: "0px" }}
+                        >
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={row.mainPoint || ""}
+                              onChange={(e) =>
+                                handleCaseStatusChange(idx, "mainPoint", e.target.value)
+                              }
+                              className="case-status-input"
+                              placeholder="Enter main point of agreement/award"
+                            />
+                          ) : (
+                            <span>{row.mainPoint}</span>
+                          )}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  {/* Execution Table */}
+                  <table className="case-status-table">
+                    <tbody>
+                      <tr>
+                        <td
+                          className="case-status-cell"
+                          style={{ fontWeight: 600, width: 220 }}
+                        >
+                          Execution
+                        </td>
+                        <td
+                          className="case-status-cell"
+                          style={{
+                            fontWeight: 600,
+                            width: 240,
+                            textAlign: "center",
+                          }}
+                        >
+                          {isEditing ? (
+                            <>
+                              <span
+                                className={`pill-radio${
+                                  row.execution === "Yes" ? " selected" : ""
+                                }`}
+                                onClick={() =>
+                                  handleCaseStatusChange(idx, "execution", "Yes")
+                                }
+                              >
+                                Yes
+                              </span>
+                              <span style={{ margin: "0 8px" }}>or</span>
+                              <span
+                                className={`pill-radio${
+                                  row.execution === "No" ? " selected" : ""
+                                }`}
+                                onClick={() =>
+                                  handleCaseStatusChange(idx, "execution", "No")
+                                }
+                              >
+                                No
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span
+                                className={`pill-radio${
+                                  row.execution === "Yes" ? " selected" : ""
+                                }`}
+                                style={{ cursor: "default" }}
+                              >
+                                Yes
+                              </span>
+                              <span style={{ margin: "0 8px" }}>or</span>
+                              <span
+                                className={`pill-radio${
+                                  row.execution === "No" ? " selected" : ""
+                                }`}
+                                style={{ cursor: "default" }}
+                              >
+                                No
+                              </span>
+                            </>
+                          )}
+                        </td>
+                        <td className="case-status-cell" style={{ width: 205 }}>
+                          Date:&nbsp;
+                          {isEditing ? (
+                            <input
+                              type="date"
+                              value={row.executionDate || ""}
+                              onChange={(e) =>
+                                handleCaseStatusChange(
+                                  idx,
+                                  "executionDate",
+                                  e.target.value
+                                )
+                              }
+                              className="case-status-input"
+                              style={{ width: "70%" }}
+                            />
+                          ) : (
+                            <span>{row.executionDate}</span>
+                          )}
+                        </td>
+                        <td className="case-status-cell">
+                          Reason:&nbsp;
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={row.executionReason || ""}
+                              onChange={(e) =>
+                                handleCaseStatusChange(
+                                  idx,
+                                  "executionReason",
+                                  e.target.value
+                                )
+                              }
+                              className="case-status-input"
+                              placeholder="Enter reason"
+                              style={{ width: "85%" }}
+                            />
+                          ) : (
+                            <span>{row.executionReason}</span>
+                          )}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </>
+              )}
             </div>
-            {/* Repudiated and Execution tables, only if Settled Amicably */}
-            {row.selectedStatus === "Settled Amicably" && isEditing && (
-              <>
-                {/* Repudiated Table */}
-                <table className="case-status-table">
-                  <tbody>
-                    <tr>
-                      <td className="case-status-cell" style={{fontWeight: 600, background: "#f8f8f8" }}>
-                        {row.selectedStatus && <span>{row.selectedStatus}</span>}
-                      </td>
-                      <td className="case-status-cell" style={{fontWeight: 600, borderBottomColor: '#ffffff'}}>
-                        Main Point of Agreement/Award:
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="case-status-cell" style={{fontWeight: 600,  width: 220}}>
-                        Repudiated?&nbsp;
-                        <span
-                          className={`pill-radio${row.repudiated === "Yes" ? " selected" : ""}`}
-                          onClick={() => handleCaseStatusChange(idx, "repudiated", "Yes")}
-                        >Yes</span>
-                        <span style={{ margin: "0 8px" }}>or</span>
-                        <span
-                          className={`pill-radio${row.repudiated === "No" ? " selected" : ""}`}
-                          onClick={() => handleCaseStatusChange(idx, "repudiated", "No")}
-                        >No</span>
-                      </td>
-                      <td
-                        className="case-status-cell"
-                        style={{ verticalAlign: "top" , paddingTop: "0px"}}>
-                        <input
-                          type="text"
-                          value={row.mainPoint}
-                          onChange={e => handleCaseStatusChange(idx, "mainPoint", e.target.value)}
-                          className="case-status-input"
-                          placeholder="Enter main point of agreement/award"
-                        />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                {/* Execution Table */}
-                <table className="case-status-table">
-                  <tbody>
-                    <tr>
-                      <td className="case-status-cell" style={{fontWeight: 600,  width: 220}}>Execution</td>
-                      <td className="case-status-cell" style={{fontWeight: 600,  width: 240, textAlign: "center" }}>
-                        <span
-                          className={`pill-radio${row.execution === "Yes" ? " selected" : ""}`}
-                          onClick={() => handleCaseStatusChange(idx, "execution", "Yes")}
-                        >Yes</span>
-                        <span style={{ margin: "0 8px" }}>or</span>
-                        <span
-                          className={`pill-radio${row.execution === "No" ? " selected" : ""}`}
-                          onClick={() => handleCaseStatusChange(idx, "execution", "No")}
-                        >No</span>
-                      </td>
-                      <td className="case-status-cell" style={{ width: 205 }}>
-                        Date:&nbsp;
-                        <input
-                          type="date"
-                          value={row.executionDate}
-                          onChange={e => handleCaseStatusChange(idx, "executionDate", e.target.value)}
-                          className="case-status-input"
-                          style={{ width: "70%" }}
-                        />
-                      </td>
-                      <td className="case-status-cell">
-                        Reason:&nbsp;
-                        <input
-                          type="text"
-                          value={row.executionReason}
-                          onChange={e => handleCaseStatusChange(idx, "executionReason", e.target.value)}
-                          className="case-status-input"
-                          placeholder="Enter reason"
-                          style={{ width: "85%" }}
-                        />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </>
-            )}
-            {row.selectedStatus === "Settled Amicably" && !isEditing && (
-              <>
-                {/* Repudiated Table (read-only) */}
-                <table className="case-status-table">
-                  <tbody>
-                    <tr>
-                      <td className="case-status-cell" style={{fontWeight: 600, background: "#f8f8f8" }}>
-                        {row.selectedStatus && <span>{row.selectedStatus}</span>}
-                      </td>
-                      <td className="case-status-cell" style={{fontWeight: 600, borderBottomColor: '#ffffff'}}>
-                        Main Point of Agreement/Award:
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="case-status-cell" style={{fontWeight: 600,  width: 220}}>
-                        Repudiated?&nbsp;
-                        <span
-                          className={`pill-radio${row.repudiated === "Yes" ? " selected" : ""}`}
-                          style={{ cursor: "default" }}
-                        >Yes</span>
-                        <span style={{ margin: "0 8px" }}>or</span>
-                        <span
-                          className={`pill-radio${row.repudiated === "No" ? " selected" : ""}`}
-                          style={{ cursor: "default" }}
-                        >No</span>
-                      </td>
-                      <td
-                        className="case-status-cell"
-                        style={{ verticalAlign: "top" , paddingTop: "0px"}}>
-                        <span>{row.mainPoint}</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                {/* Execution Table */}
-                <table className="case-status-table">
-                  <tbody>
-                    <tr>
-                      <td className="case-status-cell" style={{fontWeight: 600,  width: 220}}>Execution</td>
-                      <td className="case-status-cell" style={{fontWeight: 600,  width: 240, textAlign: "center" }}>
-                        <span
-                          className={`pill-radio${row.execution === "Yes" ? " selected" : ""}`}
-                          style={{ cursor: "default" }}
-                        >Yes</span>
-                        <span style={{ margin: "0 8px" }}>or</span>
-                        <span
-                          className={`pill-radio${row.execution === "No" ? " selected" : ""}`}
-                          style={{ cursor: "default" }}
-                        >No</span>
-                      </td>
-                      <td className="case-status-cell" style={{ width: 205 }}>
-                        Date:&nbsp;
-                        <span>{row.executionDate}</span>
-                      </td>
-                      <td className="case-status-cell">
-                        Reason:&nbsp;
-                        <span>{row.executionReason}</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Compliance to Amicable Settlement */}
