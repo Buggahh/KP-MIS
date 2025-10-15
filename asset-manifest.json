@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/KP-MIS/static/css/main.4af1b6c6.css",
-    "main.js": "/KP-MIS/static/js/main.317c044a.js",
+    "main.css": "/KP-MIS/static/css/main.3fc406e3.css",
+    "main.js": "/KP-MIS/static/js/main.a66a50dc.js",
     "static/media/eye-off.png": "/KP-MIS/static/media/eye-off.c3bc1d12bcc8981f2f64.png",
     "static/media/user.png": "/KP-MIS/static/media/user.155501afc9fb319300ea.png",
     "static/media/eye.png": "/KP-MIS/static/media/eye.54b3107d160578572bcc.png",
     "index.html": "/KP-MIS/index.html",
-    "main.4af1b6c6.css.map": "/KP-MIS/static/css/main.4af1b6c6.css.map",
-    "main.317c044a.js.map": "/KP-MIS/static/js/main.317c044a.js.map"
+    "main.3fc406e3.css.map": "/KP-MIS/static/css/main.3fc406e3.css.map",
+    "main.a66a50dc.js.map": "/KP-MIS/static/js/main.a66a50dc.js.map"
   },
   "entrypoints": [
-    "static/css/main.4af1b6c6.css",
-    "static/js/main.317c044a.js"
+    "static/css/main.3fc406e3.css",
+    "static/js/main.a66a50dc.js"
   ]
 }
