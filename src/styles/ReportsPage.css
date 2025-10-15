@@ -1,0 +1,295 @@
+/* --- Reports Generate Section Table --- */
+.reports-search-section {
+  margin: 35px 20px 0 20px;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
+.reports-search-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: #fff;
+}
+
+
+.reports-generate-label {
+  color: #ed1c26;
+  font-size: 20px;
+  font-weight: 800;
+  min-width: 120px;
+  border: none;
+  background: #fff;
+}
+
+.reports-search-table td {
+  min-width: 80px;
+  vertical-align: middle;
+  background: #fff7f0;
+}
+
+.reports-report-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  min-width: 80px;
+  max-width: 160px;
+  background: #fff;
+}
+
+.reports-period-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #222;
+  min-width: 50px;
+  max-width: 80px;
+  width: 80px;
+  background: #fff;
+}
+
+.reports-input {
+  border: 1px solid #222;
+  padding: 7px 8px;
+  width: 100%;
+  min-width: 60px;
+  max-width: 100%;
+  outline: none;
+  box-sizing: border-box;
+  font-size: 15px;
+  background: #fff7f0;
+}
+
+.reports-search-table td[style*="text-align: right"] {
+  text-align: right;
+  font-weight: 600;
+  color: #222;
+  background: #fff7f0;
+  padding-right: 15px;
+}
+
+.reports-search-table input[readonly] {
+  background: #fff7f0;
+  color: #222;
+  pointer-events: none;
+}
+
+/* Make oval cells smaller */
+.reports-search-table td.oval-cell {
+  min-width: 32px;
+  width: 50px;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  text-align: center;
+}
+
+/* --- Oval Radio Buttons --- */
+.reports-oval {
+  display: inline-block;
+  width: 32px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid #222;
+  margin: 0 8px 0 0;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.reports-oval.selected {
+  background: #222;
+  border-color: #222;
+}
+
+.reports-oval:after {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+}
+
+/* --- Print Cell --- */
+.reports-print-cell {
+  min-width: 120px;
+  width: 200px;
+  font-size: 22px;
+}
+
+.reports-print-content {
+  display: flex;
+  flex-direction: row;         /* Change from column to row */
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;                   /* Space between icon and label */
+  padding: 12px 0;
+}
+
+.reports-print-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
+.reports-print-label {
+  color: #ed1c26;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+/* --- External Table --- */
+
+.database-reports-table-container {
+  margin: 24px 0 0 0;
+  max-width: 100%;
+  height: 500px;
+  overflow: auto;
+  border: 3px solid #000000;
+  background: #fff;
+  padding: 15px;
+}
+
+.database-reports-table-list {
+  width: 100%;
+  border-collapse: collapse; /* Fix thick/overlapping borders */
+  min-width: 900px;
+}
+
+.database-reports-table-list th,
+.database-reports-table-list td {
+  padding: 10px 12px;
+  border: 1px solid #222; /* Single border for all cells */
+  font-size: 15px;
+  background: #fff;
+}
+
+.database-reports-table-list th {
+  background: #fff;
+  font-weight: 700;
+  color: #222;
+  text-align: center;
+  vertical-align: middle;
+  border-left: 1px solid #fff;   /* default: white left border */
+  border-right: 1px solid #fff;  /* default: white right border */
+  border-top: 1px solid #222;
+  border-bottom: 1px solid #222;
+}
+
+/* Left border of "Year" header is black */
+.database-reports-table-list th:first-child {
+  border-left: 1.5px solid #222;
+}
+
+/* Right border of "Tag" header is black */
+.database-reports-table-list th:last-child {
+  border-right: 1.5px solid #222;
+}
+
+.database-reports-table-list th.spacer-header,
+.database-reports-table-list td.spacer-cell {
+  width: 5px;
+  min-width: 5px;
+  max-width: 5px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.database-reports-table-list th.spacer-header{
+  border-top: 1.5px solid #222;
+  border-bottom: 1.5px solid #222;
+}
+
+.database-reports-table-list .header-gap-row td {
+  height: 5px !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* --- Reports --- */
+
+.database-reports-table-container {
+  margin: 30px 30px 30px 30px;
+  max-width: 100%;
+  height: 500px;
+  overflow: auto;
+  border: 3px solid #000000;
+  background: #fff;
+  padding: 15px;
+}
+
+/* Center all table cells in results table by default */
+.database-reports-table-list td,
+.database-reports-table-list th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Justify the "MAIN POINT OF AGREEMENT" column */
+.database-reports-table-list td.main-point-cell {
+  text-align: justify;
+  vertical-align: middle;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  .reports-search-table {
+    min-width: 600px;
+  }
+  .reports-search-table td {
+    font-size: 13px;
+    min-width: 50px;
+    padding: 6px 2px;
+  }
+  .reports-input {
+    min-width: 40px;
+    max-width: 80px;
+    font-size: 13px;
+  }
+  .reports-print-cell {
+    min-width: 80px;
+    font-size: 16px;
+  }
+  .reports-print-icon {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 600px) {
+  .reports-search-section {
+    padding: 0 2px;
+  }
+  .reports-search-table {
+    min-width: 400px;
+  }
+  .reports-search-table td {
+    font-size: 11px;
+    min-width: 30px;
+    padding: 4px 1px;
+  }
+  .reports-input {
+    min-width: 30px;
+    max-width: 60px;
+    font-size: 11px;
+  }
+  .reports-print-cell {
+    min-width: 50px;
+    font-size: 12px;
+  }
+  .reports-print-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
