@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { db } from "./firebase";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
@@ -8,6 +8,8 @@ import submitIcon from './icons/submit.png';
 import { submitNewCase } from "./SubmitCase";
 import { canWriteToFirestore } from "./RoleCheck";
 import { uploadFile } from "./FileUploadUtil";
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
 
 function NewRecordPage({ onLogout }) {
   const [role, setRole] = useState("");
@@ -33,21 +35,21 @@ function NewRecordPage({ onLogout }) {
   const [arbitrationRows, setArbitrationRows] = useState([
     { date: "", time: "", remarks: "" }
   ]);
-    const [ammicableRows, setAmmicableRows] = useState([
+  const [ammicableRows, setAmmicableRows] = useState([
     { date: "", time: "", remarks: "" }
   ]);
 
   const [caseStatusRows, setCaseStatusRows] = useState([
-  {
-    statusDate: "",
-    selectedStatus: "",
-    repudiated: "",
-    mainPoint: "",
-    execution: "",
-    executionDate: "",
-    executionReason: ""
-  }
-]);
+    {
+      statusDate: "",
+      selectedStatus: "",
+      repudiated: "",
+      mainPoint: "",
+      execution: "",
+      executionDate: "",
+      executionReason: ""
+    }
+  ]);
 
   // Complainants state
   const [complainants, setComplainants] = useState([
@@ -148,7 +150,7 @@ function NewRecordPage({ onLogout }) {
       )
     );
   };
-    const handleAmmicableChange = (idx, field, value) => {
+  const handleAmmicableChange = (idx, field, value) => {
     setAmmicableRows(rows =>
       rows.map((row, i) =>
         i === idx ? { ...row, [field]: value } : row
@@ -183,7 +185,7 @@ function NewRecordPage({ onLogout }) {
       { date: "", time: "", remarks: "" }
     ]);
   };
-    const handleAddAmmicable = () => {
+  const handleAddAmmicable = () => {
     setAmmicableRows(rows => [
       ...rows,
       { date: "", time: "", remarks: "" }
@@ -198,7 +200,7 @@ function NewRecordPage({ onLogout }) {
     );
   };
 
-    const handleRespondentChange = (idx, field, value) => {
+  const handleRespondentChange = (idx, field, value) => {
     setRespondents(list =>
       list.map((item, i) =>
         i === idx ? { ...item, [field]: value } : item
@@ -268,11 +270,11 @@ function NewRecordPage({ onLogout }) {
   ];
 
   const handleOpenUpload = (type) => {
-  setUploadType(type);
-  setShowUploadModal(true);
-  setUploadError("");
-  setUploadedUrl("");
-};
+    setUploadType(type);
+    setShowUploadModal(true);
+    setUploadError("");
+    setUploadedUrl("");
+  };
 
   // Submit handler for the sticky submit button
   const [loading, setLoading] = useState(false);
@@ -405,8 +407,225 @@ function NewRecordPage({ onLogout }) {
     setUploading(false);
   };
 
+  const dateTimeDateRef = useRef(null);   // date part of "Date & Time Filed"
+  const dateTimeTimeRef = useRef(null);   // time part of "Date & Time Filed"
+  const dateOfIncidentRef = useRef(null); // date of incident
+
+  const fpDateRef = useRef(null); // flatpickr instance for date
+  const fpTimeRef = useRef(null); // flatpickr instance for time
+  const fpIncidentRef = useRef(null); // flatpickr instance for incident date
+
+  useEffect(() => {
+    // cleanup before reinitializing
+    if (fpDateRef.current) { fpDateRef.current.destroy(); fpDateRef.current = null; }
+    if (fpTimeRef.current) { fpTimeRef.current.destroy(); fpTimeRef.current = null; }
+    if (fpIncidentRef.current) { fpIncidentRef.current.destroy(); fpIncidentRef.current = null; }
+
+    // init date picker
+    if (dateTimeDateRef.current) {
+      fpDateRef.current = flatpickr(dateTimeDateRef.current, {
+        dateFormat: "Y-m-d",
+        allowInput: true,
+        defaultDate: complainantSection.dateTimeFiled?.split("T")[0] || null,
+        onChange: (selectedDates, dateStr) => {
+          const currentTime = complainantSection.dateTimeFiled?.split("T")[1] || "";
+          handleComplainantSectionChange(
+            "dateTimeFiled",
+            dateStr + (currentTime ? "T" + currentTime : "")
+          );
+        }
+      });
+    }
+
+    // init time picker
+    if (dateTimeTimeRef.current) {
+      fpTimeRef.current = flatpickr(dateTimeTimeRef.current, {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        allowInput: true,
+        defaultDate: complainantSection.dateTimeFiled?.split("T")[1] || null,
+        onChange: (selectedDates, timeStr) => {
+          const currentDate = complainantSection.dateTimeFiled?.split("T")[0] || "";
+          handleComplainantSectionChange(
+            "dateTimeFiled",
+            (currentDate ? currentDate : "") + (timeStr ? "T" + timeStr : "")
+          );
+        }
+      });
+    }
+
+    // init date of incident picker
+    if (dateOfIncidentRef.current) {
+      fpIncidentRef.current = flatpickr(dateOfIncidentRef.current, {
+        dateFormat: "Y-m-d",
+        allowInput: true,
+        defaultDate: complainantSection.dateOfIncident || null,
+        onChange: (selectedDates, dateStr) => {
+          handleComplainantSectionChange("dateOfIncident", dateStr);
+        }
+      });
+    }
+
+    // cleanup on unmount
+    return () => {
+      if (fpDateRef.current) { fpDateRef.current.destroy(); fpDateRef.current = null; }
+      if (fpTimeRef.current) { fpTimeRef.current.destroy(); fpTimeRef.current = null; }
+      if (fpIncidentRef.current) { fpIncidentRef.current.destroy(); fpIncidentRef.current = null; }
+    };
+  }, [complainantSection.dateTimeFiled]); // 👈 Re-run effect when date/time changes
+
+  // Generic flatpickr initializer for other date/time fields (birthdates, case management, case status, compliance)
+  const fpMapRef = useRef(new Map());
+  useEffect(() => {
+    // destroy previous instances
+    fpMapRef.current.forEach(inst => {
+      try { inst.destroy(); } catch (e) {}
+    });
+    fpMapRef.current.clear();
+
+    // helper to update relevant state from flatpickr change
+    const setFieldFromFp = (section, idx, field, value) => {
+      // idx may be null for single-value sections (not used here)
+      switch (section) {
+        case "complainant":
+          if (idx !== null) handleComplainantChange(Number(idx), field, value);
+          break;
+        case "respondent":
+          if (idx !== null) handleRespondentChange(Number(idx), field, value);
+          break;
+        case "mediation":
+          if (idx !== null) handleMediationChange(Number(idx), field, value);
+          break;
+        case "conciliation":
+          if (idx !== null) handleConciliationChange(Number(idx), field, value);
+          break;
+        case "arbitration":
+          if (idx !== null) handleArbitrationChange(Number(idx), field, value);
+          break;
+        case "ammicable":
+          if (idx !== null) handleAmmicableChange(Number(idx), field, value);
+          break;
+        case "caseStatus":
+          if (idx !== null) handleCaseStatusChange(Number(idx), field, value);
+          break;
+        default:
+          break;
+      }
+    };
+
+    // attach to all elements with .fp-input
+    const nodes = document.querySelectorAll(".fp-input");
+    nodes.forEach(el => {
+      const section = el.dataset.section;
+      const field = el.dataset.field;
+      const idx = el.dataset.idx !== undefined ? el.dataset.idx : null;
+      const isTime = field === "time";
+      const opts = isTime
+        ? {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            allowInput: true,
+            defaultDate: el.value || null,
+            onChange: (selectedDates, dateStr) => {
+              setFieldFromFp(section, idx, field, dateStr);
+            }
+          }
+        : {
+            dateFormat: "Y-m-d",
+            allowInput: true,
+            defaultDate: el.value || null,
+            onChange: (selectedDates, dateStr) => {
+              setFieldFromFp(section, idx, field, dateStr);
+            }
+          };
+
+      try {
+        const inst = flatpickr(el, opts);
+        fpMapRef.current.set(el, inst);
+      } catch (err) {
+        console.warn("flatpickr attach failed", err);
+      }
+    });
+
+    // cleanup
+    return () => {
+      fpMapRef.current.forEach(inst => {
+        try { inst.destroy(); } catch (e) {}
+      });
+      fpMapRef.current.clear();
+    };
+    // re-run when any dynamic array length changes so newly-added rows get pickers
+  }, [complainants.length, respondents.length, mediationRows.length, conciliationRows.length, arbitrationRows.length, ammicableRows.length, caseStatusRows.length]);
+
+  useEffect(() => {
+    // update pickers if the state changes from other actions
+    try {
+      const datePart = complainantSection.dateTimeFiled?.split("T")[0] || "";
+      const timePart = complainantSection.dateTimeFiled?.split("T")[1] || "";
+
+      if (fpDateRef.current) {
+        // setDate accepts ''/null to clear
+        fpDateRef.current.setDate(datePart || null, false); // false: don't trigger onChange
+      }
+      if (fpTimeRef.current) {
+        fpTimeRef.current.setDate(timePart || null, false);
+      }
+      if (fpIncidentRef.current) {
+        fpIncidentRef.current.setDate(complainantSection.dateOfIncident || null, false);
+      }
+
+      // sync other pickers created via fpMapRef
+      fpMapRef.current.forEach((inst, el) => {
+        const section = el.dataset.section;
+        const field = el.dataset.field;
+        const idx = el.dataset.idx !== undefined ? Number(el.dataset.idx) : null;
+        let desired = el.value || "";
+        // read corresponding state for better sync
+        switch (section) {
+          case "complainant":
+            if (idx !== null) desired = (complainants[idx]?.birthdate) || "";
+            break;
+          case "respondent":
+            if (idx !== null) desired = (respondents[idx]?.birthdate) || "";
+            break;
+          case "mediation":
+            if (idx !== null) desired = (mediationRows[idx]?.[field]) || "";
+            break;
+          case "conciliation":
+            if (idx !== null) desired = (conciliationRows[idx]?.[field]) || "";
+            break;
+          case "arbitration":
+            if (idx !== null) desired = (arbitrationRows[idx]?.[field]) || "";
+            break;
+          case "ammicable":
+            if (idx !== null) desired = (ammicableRows[idx]?.[field]) || "";
+            break;
+          case "caseStatus":
+            if (idx !== null) desired = (caseStatusRows[idx]?.[field]) || "";
+            break;
+          default:
+            break;
+        }
+        try {
+          inst.setDate(desired || null, false);
+        } catch (e) {
+          // ignore
+        }
+      });
+    } catch (err) {
+      // ignore minor sync errors
+      console.warn("flatpickr sync:", err);
+    }
+  }, [complainantSection.dateTimeFiled, complainantSection.dateOfIncident,
+      complainants, respondents, mediationRows, conciliationRows, arbitrationRows, ammicableRows, caseStatusRows]);
+
   return (
-    <div>
+    <div className="new-record-page">
+      {/* Loading overlay */}
       {loading && (
         <div style={{
           position: "fixed",
@@ -548,33 +767,32 @@ function NewRecordPage({ onLogout }) {
                 <td className="complainant-label">Date &amp; Time Filed</td>
                 <td>
                   <input
-                    type="date"
+                    ref={dateTimeDateRef}
+                    type="text"                        // flatpickr will attach to text input
                     className="newrecord-input small-input"
-                    value={complainantSection.dateTimeFiled.split("T")[0] || ""}
-                    onChange={e =>
-                      handleComplainantSectionChange(
-                        "dateTimeFiled",
-                        e.target.value +
-                          (complainantSection.dateTimeFiled.split("T")[1]
-                            ? "T" + complainantSection.dateTimeFiled.split("T")[1]
-                            : "")
-                      )
-                    }
+                    placeholder="Select Date"
+                    // value is managed by flatpickr + sync effect, keep uncontrolled to let flatpickr manage input
+                    onBlur={() => {
+                      // if user typed directly, ensure state sync (flatpickr onChange may not fire)
+                      const val = dateTimeDateRef.current?.value || "";
+                      const currentTime = complainantSection.dateTimeFiled?.split("T")[1] || "";
+                      if (val !== (complainantSection.dateTimeFiled?.split("T")[0] || "")) {
+                        handleComplainantSectionChange("dateTimeFiled", val + (currentTime ? "T" + currentTime : ""));
+                      }
+                    }}
                   />
                   <input
-                    type="time"
+                    ref={dateTimeTimeRef}
+                    type="text"
                     className="newrecord-input small-input"
-                    value={
-                      complainantSection.dateTimeFiled.split("T")[1] || ""
-                    }
-                    onChange={e =>
-                      handleComplainantSectionChange(
-                        "dateTimeFiled",
-                        (complainantSection.dateTimeFiled.split("T")[0] || "") +
-                          "T" +
-                          e.target.value
-                      )
-                    }
+                    placeholder="Select Time"
+                    onBlur={() => {
+                      const val = dateTimeTimeRef.current?.value || "";
+                      const currentDate = complainantSection.dateTimeFiled?.split("T")[0] || "";
+                      if (val !== (complainantSection.dateTimeFiled?.split("T")[1] || "")) {
+                        handleComplainantSectionChange("dateTimeFiled", (currentDate ? currentDate : "") + (val ? "T" + val : ""));
+                      }
+                    }}
                   />
                 </td>
               </tr>
@@ -582,12 +800,16 @@ function NewRecordPage({ onLogout }) {
                 <td className="complainant-label">Date of Incident</td>
                 <td>
                   <input
-                    type="date"
+                    ref={dateOfIncidentRef}
+                    type="text"
                     className="newrecord-input small-input"
-                    value={complainantSection.dateOfIncident}
-                    onChange={e =>
-                      handleComplainantSectionChange("dateOfIncident", e.target.value)
-                    }
+                    placeholder="Select Date"
+                    onBlur={() => {
+                      const val = dateOfIncidentRef.current?.value || "";
+                      if (val !== complainantSection.dateOfIncident) {
+                        handleComplainantSectionChange("dateOfIncident", val);
+                      }
+                    }}
                   />
                 </td>
               </tr>
@@ -619,7 +841,7 @@ function NewRecordPage({ onLogout }) {
                   <select
                     className="newrecord-input"
                     value={complainantSection.natureOfComplaint}
-                    
+
                     onChange={e =>
                       handleComplainantSectionChange("natureOfComplaint", e.target.value)
                     }
@@ -754,8 +976,12 @@ function NewRecordPage({ onLogout }) {
                   <td className="complainantInformation-label">Birthdate:</td>
                   <td>
                     <input
-                      type="date"
-                      className="newrecord-input"
+                      type="text"
+                      className="newrecord-input fp-input"
+                      data-section="complainant"
+                      data-idx={idx}
+                      data-field="birthdate"
+                      placeholder="Select Date"
                       value={c.birthdate}
                       onChange={e => handleComplainantChange(idx, "birthdate", e.target.value)}
                     />
@@ -943,8 +1169,12 @@ function NewRecordPage({ onLogout }) {
                   <td className="respondentInformation-label">Birthdate:</td>
                   <td>
                     <input
-                      type="date"
-                      className="newrecord-input"
+                      type="text"
+                      className="newrecord-input fp-input"
+                      data-section="respondent"
+                      data-idx={idx}
+                      data-field="birthdate"
+                      placeholder="Select Date"
                       value={c.birthdate}
                       onChange={e => handleRespondentChange(idx, "birthdate", e.target.value)}
                     />
@@ -1055,18 +1285,26 @@ function NewRecordPage({ onLogout }) {
                   </td>
                   <td>
                     <input
-                      type="date"
+                      type="text"
+                      className="newrecord-input fp-input"
+                      data-section="mediation"
+                      data-idx={idx}
+                      data-field="date"
+                      placeholder="Select Date"
                       value={row.date}
                       onChange={e => handleMediationChange(idx, "date", e.target.value)}
-                      className="newrecord-input"
                     />
                   </td>
                   <td>
                     <input
-                      type="time"
+                      type="text"
+                      className="newrecord-input fp-input"
+                      data-section="mediation"
+                      data-idx={idx}
+                      data-field="time"
+                      placeholder="Select Time"
                       value={row.time}
                       onChange={e => handleMediationChange(idx, "time", e.target.value)}
-                      className="newrecord-input"
                     />
                   </td>
                   <td style={{ paddingLeft: "0px" }}>
@@ -1106,18 +1344,26 @@ function NewRecordPage({ onLogout }) {
                   </td>
                   <td>
                     <input
-                      type="date"
+                      type="text"
+                      className="newrecord-input fp-input"
+                      data-section="conciliation"
+                      data-idx={idx}
+                      data-field="date"
+                      placeholder="Select Date"
                       value={row.date}
                       onChange={e => handleConciliationChange(idx, "date", e.target.value)}
-                      className="newrecord-input"
                     />
                   </td>
                   <td>
                     <input
-                      type="time"
+                      type="text"
+                      className="newrecord-input fp-input"
+                      data-section="conciliation"
+                      data-idx={idx}
+                      data-field="time"
+                      placeholder="Select Time"
                       value={row.time}
                       onChange={e => handleConciliationChange(idx, "time", e.target.value)}
-                      className="newrecord-input"
                     />
                   </td>
                   <td style={{ paddingLeft: "0px" }}>
@@ -1157,18 +1403,26 @@ function NewRecordPage({ onLogout }) {
                   </td>
                   <td>
                     <input
-                      type="date"
+                      type="text"
+                      className="newrecord-input fp-input"
+                      data-section="arbitration"
+                      data-idx={idx}
+                      data-field="date"
+                      placeholder="Select Date"
                       value={row.date}
                       onChange={e => handleArbitrationChange(idx, "date", e.target.value)}
-                      className="newrecord-input"
                     />
                   </td>
                   <td>
                     <input
-                      type="time"
+                      type="text"
+                      className="newrecord-input fp-input"
+                      data-section="arbitration"
+                      data-idx={idx}
+                      data-field="time"
+                      placeholder="Select Time"
                       value={row.time}
                       onChange={e => handleArbitrationChange(idx, "time", e.target.value)}
-                      className="newrecord-input"
                     />
                   </td>
                   <td style={{ paddingLeft: "0px" }}>
@@ -1195,7 +1449,7 @@ function NewRecordPage({ onLogout }) {
           </table>
         </div>
       </div>
-      
+
       {/* Case Status - Section */}
       <div className="newrecord-main-content" >
         <h1 style={{ color: 'red' }}>Case Status</h1>
@@ -1206,14 +1460,18 @@ function NewRecordPage({ onLogout }) {
               <table className="case-status-table">
                 <tbody>
                   <tr>
-                    <td className="case-status-cell" style={{fontWeight: 600,  width: 220}}>
+                    <td className="case-status-cell" style={{ width: 220 }}>
                       Date:&nbsp;
                       <input
-                        type="date"
+                        type="text"
+                        className="case-status-input fp-input"
+                        data-section="caseStatus"
+                        data-idx={idx}
+                        data-field="statusDate"
                         value={row.statusDate}
                         onChange={e => handleCaseStatusChange(idx, "statusDate", e.target.value)}
-                        className="case-status-input"
                         style={{ width: "70%" }}
+                        placeholder= "Select Date"
                       />
                     </td>
                     {statusOptions.map(option => (
@@ -1224,7 +1482,7 @@ function NewRecordPage({ onLogout }) {
                         style={{textAlign: "center", cursor: "pointer" }}
                       >
                         {option}
-                      
+
                       </td>
                     ))}
                     {idx === caseStatusRows.length - 1 && (
@@ -1303,11 +1561,16 @@ function NewRecordPage({ onLogout }) {
                       <td className="case-status-cell" style={{ width: 205 }}>
                         Date:&nbsp;
                         <input
-                          type="date"
+                          type="text"
+                          className="case-status-input fp-input"
+                          data-section="caseStatus"
+                          data-idx={idx}
+                          data-field="executionDate"
                           value={row.executionDate}
                           onChange={e => handleCaseStatusChange(idx, "executionDate", e.target.value)}
-                          className="case-status-input"
-                          style={{ width: "70%" }}
+                          style={{ width: "60%" }}
+                          placeholder="Select Date"
+                          noCalendar = "false"
                         />
                       </td>
                       <td className="case-status-cell">
@@ -1340,13 +1603,17 @@ function NewRecordPage({ onLogout }) {
               </tr>
               {ammicableRows.map((row, idx) => (
                 <tr key={idx} style={{ position: idx === ammicableRows.length - 1 ? "relative" : "static" }}>
-                  <td style={{ width: 0 }}>
+                  <td style={{ width: "20%" }}>
                     <span style={{marginRight: 12}}>Date:</span>
                     <input
-                      type="date"
+                      type="text"
+                      className="newrecord-input fp-input"
+                      data-section="ammicable"
+                      data-idx={idx}
+                      data-field="date"
+                      placeholder="Select Date"
                       value={row.date}
                       onChange={e => handleAmmicableChange(idx, "date", e.target.value)}
-                      className="newrecord-input"
                       style={{ width: "70%" }}
                     />
                   </td>
@@ -1358,7 +1625,7 @@ function NewRecordPage({ onLogout }) {
                       onChange={e => handleAmmicableChange(idx, "remarks", e.target.value)}
                       className="newrecord-input"
                       placeholder="Enter remarks"
-                      style={{ width: "90%" }}
+                      style={{ width: "70%" }}
                     />
                     {idx === ammicableRows.length - 1 && (
                       <button

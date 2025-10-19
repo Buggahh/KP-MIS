@@ -1,43 +1,84 @@
 import { db } from "./firebase";
-import { doc, deleteDoc, collection, getDocs } from "firebase/firestore";
+import { doc, collection, getDocs, writeBatch } from "firebase/firestore";
 
 /**
- * Recursively deletes a document and all specified subcollections.
- * @param {string} path - Full Firestore path to the document.
- * @param {string[]} subcollections - Known subcollection names.
+ * Recursively collect DocumentReferences for a document and all nested subcollection documents.
+ * Uses parallel traversal for faster performance.
+ *
+ * @param {string} path - Full Firestore path (e.g. "cases/CASEID")
+ * @param {string[]} subcollections - Names of known subcollections to traverse
+ * @param {Array} outRefs - Array to collect DocumentReference objects
  */
-async function deleteRecursively(path, subcollections) {
-  const ref = doc(db, ...path.split("/"));
+async function collectDocRefs(path, subcollections, outRefs) {
+  const parts = path.split("/").filter(Boolean);
+  const ref = doc(db, ...parts);
 
-  for (const sub of subcollections) {
-    const snap = await getDocs(collection(db, ...path.split("/"), sub));
-    for (const d of snap.docs) {
-      await deleteRecursively(`${path}/${sub}/${d.id}`, subcollections);
-      await deleteDoc(d.ref);
-    }
-  }
+  // Process all subcollections in parallel
+  await Promise.all(
+    subcollections.map(async (sub) => {
+      const colRef = collection(db, ...parts, sub);
+      const snap = await getDocs(colRef);
 
-  await deleteDoc(ref);
+      if (!snap.empty) {
+        // Collect children recursively in parallel
+        await Promise.all(
+          snap.docs.map((d) =>
+            collectDocRefs(`${path}/${sub}/${d.id}`, subcollections, outRefs)
+          )
+        );
+      }
+    })
+  );
+
+  // Add this doc last (delete children first)
+  outRefs.push(ref);
 }
 
 /**
- * Deletes a case and all related subcollections.
- * @param {string} caseId - The case document ID.
- * @returns {Promise<boolean>} True if successful, false otherwise.
+ * Commits batched deletions (max 500 writes per batch, safe at 400).
+ * @param {Array} refs - Array of DocumentReference objects to delete
+ */
+async function commitBatches(refs) {
+  const BATCH_SIZE = 400;
+  const total = refs.length;
+
+  for (let i = 0; i < total; i += BATCH_SIZE) {
+    const batch = writeBatch(db);
+    const slice = refs.slice(i, i + BATCH_SIZE);
+    slice.forEach((r) => batch.delete(r));
+    await batch.commit();
+  }
+}
+
+/**
+ * Deletes a case document and all related subcollection documents in parallel batches.
+ *
+ * @param {string} caseId - The case document ID (e.g. "CASE123")
+ * @returns {Promise<boolean>} True on success, false otherwise.
  */
 export async function DatabaseDeleteRecord(caseId) {
   if (!caseId) return false;
+
+  const knownSubcollections = [
+    "complainant",
+    "respondent",
+    "caseStatus",
+    "caseManagement",
+    "compliance",
+  ];
+
   try {
-    await deleteRecursively(`cases/${caseId}`, [
-      "complainant",
-      "respondent",
-      "caseStatus",
-      "caseManagement",
-      "compliance"
-    ]);
+    const refsToDelete = [];
+    await collectDocRefs(`cases/${caseId}`, knownSubcollections, refsToDelete);
+
+    if (refsToDelete.length > 0) {
+      await commitBatches(refsToDelete);
+    }
+
+    console.log(`✅ Deleted ${refsToDelete.length} documents for case: ${caseId}`);
     return true;
-  } catch (error) {
-    console.error("Error deleting record:", error);
+  } catch (err) {
+    console.error("❌ DatabaseDeleteRecord error:", err);
     return false;
   }
 }

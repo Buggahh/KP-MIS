@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { db } from "./firebase";
 import {
   doc,
@@ -24,7 +24,6 @@ function formatTimestamp(ts) {
 function ViewRecordPage({ onLogout }) {
   const [username] = useState(localStorage.getItem("loggedInUsername") || "");
   const { caseNumber } = useParams();
-  const navigate = useNavigate();
   const [caseData, setCaseData] = useState(null);
 
   // Subcollections
@@ -118,6 +117,12 @@ function ViewRecordPage({ onLogout }) {
   const [editData, setEditData] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Notification states (add these)
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   // When entering edit mode, copy the current data to editData
   const handleEditClick = () => {
     setEditData({
@@ -156,16 +161,133 @@ function ViewRecordPage({ onLogout }) {
 
   // Submit edited data using updateCaseRecord from EditRecordPage.js
   const handleSubmitEdit = async () => {
+    // show submitting overlay/message
     setSubmitting(true);
+    setLoading(true);
+    setShowSuccess(false);
+    setShowError(false);
+    setErrorMessage("");
+
     try {
-      await updateCaseRecord(caseNumber, editData);
-      setIsEditing(false);
-      setEditData(null);
-      window.location.reload();
+      // --- send the update to Firestore ---
+      await updateCaseRecord(
+        caseNumber,
+        editData, // primary doc fields (if your update fn expects different args, adjust accordingly)
+        {
+          complainants: editData.complainants || [],
+          respondents: editData.respondents || [],
+          mediationRows: editData.mediationRows || [],
+          conciliationRows: editData.conciliationRows || [],
+          arbitrationRows: editData.arbitrationRows || [],
+          caseStatusRows: editData.caseStatusRows || [],
+          ammicableRows: editData.ammicableRows || []
+        }
+      );
+
+      // Immediately update UI from local edited copy so user sees changes without refresh
+      setCaseData(editData);
+      setComplainants(editData.complainants || []);
+      setRespondents(editData.respondents || []);
+      setMediationRows(editData.mediationRows || []);
+      setConciliationRows(editData.conciliationRows || []);
+      setArbitrationRows(editData.arbitrationRows || []);
+      setCaseStatusRows(editData.caseStatusRows || []);
+      setAmmicableRows(editData.ammicableRows || []);
+
+      // Show success toast / stop the loading indicator
+      setLoading(false);
+      setShowSuccess(true);
+
+      // In background, re-fetch the doc + subcollections from Firestore to ensure canonical state
+      (async () => {
+        try {
+          // fetch main doc
+          const caseDocRef = doc(db, "cases", caseNumber);
+          const caseSnap = await getDoc(caseDocRef);
+          if (caseSnap.exists()) {
+            setCaseData(caseSnap.data());
+          }
+
+          // helper to fetch simple subcollection (complainant/respondent/compliance)
+          const fetchSubcollection = async (subPath) => {
+            const colRef = collection(db, "cases", caseNumber, subPath);
+            const snap = await getDocs(colRef);
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          };
+
+          // helper to fetch caseManagement doc (mediation/conciliation/arbitration)
+          const fetchCaseManagementDoc = async (type) => {
+            const cmRef = doc(db, "cases", caseNumber, "caseManagement", type);
+            const cmSnap = await getDoc(cmRef);
+            if (!cmSnap.exists()) return [];
+            const data = cmSnap.data();
+            // convert object map to array
+            return Object.entries(data).map(([id, value]) => ({ id, ...value }));
+          };
+
+          // fetch caseStatus collection
+          const fetchCaseStatusDocs = async () => {
+            const colRef = collection(db, "cases", caseNumber, "caseStatus");
+            const snap = await getDocs(colRef);
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          };
+
+          // run in parallel
+          const [
+            complainantDocs,
+            respondentDocs,
+            mediationFromDb,
+            conciliationFromDb,
+            arbitrationFromDb,
+            caseStatusFromDb,
+            complianceDocs
+          ] = await Promise.all([
+            fetchSubcollection("complainant"),
+            fetchSubcollection("respondent"),
+            fetchCaseManagementDoc("mediation"),
+            fetchCaseManagementDoc("conciliation"),
+            fetchCaseManagementDoc("arbitration"),
+            fetchCaseStatusDocs(),
+            fetchSubcollection("compliance")
+          ]);
+
+          // update local arrays with authoritative values
+          setComplainants(complainantDocs);
+          setRespondents(respondentDocs);
+          setMediationRows(mediationFromDb);
+          setConciliationRows(conciliationFromDb);
+          setArbitrationRows(arbitrationFromDb);
+          setCaseStatusRows(caseStatusFromDb);
+          setAmmicableRows(complianceDocs);
+        } catch (bgErr) {
+          // non-fatal: log background refresh error
+          console.warn("Background refresh failed:", bgErr);
+        }
+      })();
+
+      // exit edit mode after short delay so user sees success toast
+      setTimeout(() => {
+        setShowSuccess(false);
+        setIsEditing(false);
+        setEditData(null);
+        setSubmitting(false);
+      }, 1400);
     } catch (err) {
-      alert("Failed to update: " + err.message);
+      // failure UI
+      const msg = (err && err.message) ? err.message : "Failed to submit changes.";
+      setLoading(false);
+      setSubmitting(false);
+      setShowError(true);
+      setErrorMessage(msg);
+
+      // auto-hide error after a longer time
+      setTimeout(() => {
+        setShowError(false);
+        setErrorMessage("");
+      }, 4000);
+
+      console.error("Error submitting edit:", err);
     }
-    setSubmitting(false);
   };
 
   // Handles changes to fields in caseStatusRows in edit mode
@@ -1514,21 +1636,84 @@ useEffect(() => {
         </ul>
       </div>
       
+      {/* Submitting overlay */}
+      {loading && (
+        <div style={{
+          position: "fixed",
+          left: 0, top: 0, right: 0, bottom: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(0,0,0,0.35)",
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: "#fff",
+            padding: "18px 22px",
+            borderRadius: 6,
+            boxShadow: "0 6px 18px rgba(0,0,0,0.25)",
+            fontWeight: 700,
+            color: "#222"
+          }}>
+            Submitting case, please wait...
+          </div>
+        </div>
+      )}
+
+      {/* Success toast */}
+      {showSuccess && (
+        <div style={{
+          position: "fixed",
+          top: 20,
+          right: "30px",
+          background: "#27ae60",
+          color: "#fff",
+          borderRadius: "8px",
+          padding: "14px 28px",
+          fontWeight: 600,
+          fontSize: "1.1rem",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+          zIndex: 9998,
+          display: "flex",
+          alignItems: "center"
+        }}>
+          Case submitted successfully.
+        </div>
+      )}
+
+      {/* Error toast */}
+      {showError && (
+        <div style={{
+          position: "fixed",
+          right: 20,
+          top: 20,
+          padding: "12px 18px",
+          background: "#fff2f2",
+          color: "#a40000",
+          border: "1px solid #a40000",
+          borderRadius: 6,
+          fontWeight: 700,
+          zIndex: 9999
+        }}>
+          {errorMessage || "Error submitting case."}
+        </div>
+      )}
+
       {/* Sticky Edit/Submit/Cancel Buttons */}
       <div className="sticky-button-panel">
         {isEditing ? (
           <>
             <button
               className="sticky-btn submit"
+              style={{ marginLeft: 25 }}
               onClick={handleSubmitEdit}
               disabled={submitting}
             >
-              <img src={editIcon} alt="Submit" style={{ marginRight: "10px" }}/>
               <span>SUBMIT</span>
             </button>
             <button
               className="sticky-btn"
-              style={{ marginLeft: 16, background: "#aaa" }}
+              style={{ marginLeft: 25 }}
               onClick={handleCancelEdit}
               disabled={submitting}
             >

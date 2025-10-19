@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./styles/ReportsPage.css";
 import printIcon from "./icons/print.png";
@@ -10,6 +10,20 @@ function ReportsPage({ onLogout }) {
   const [monthYear, setMonthYear] = useState(""); // For month/year fields
   const [quarter, setQuarter] = useState(""); // For quarter field
   const [year, setYear] = useState(""); // For year field
+
+  useEffect(() => {
+  // Clear other period fields when changing selection
+  if (selectedPeriod === "month") {
+    setQuarter("");
+    setYear("");
+  } else if (selectedPeriod === "quarter") {
+    setMonthYear("");
+    setYear("");
+  } else if (selectedPeriod === "year") {
+    setMonthYear("");
+    setQuarter("");
+  }
+}, [selectedPeriod]);
 
   const rows = [
     {
@@ -135,13 +149,18 @@ function ReportsPage({ onLogout }) {
               </td>
               <td className="reports-period-label">Quarter</td>
               <td>
-                <input
-                  type="month"
+                <select
                   className="reports-input"
                   value={quarter}
                   onChange={e => setQuarter(e.target.value)}
                   disabled={selectedPeriod !== "quarter"}
-                />
+                >
+                  <option value="">Select Quarter</option>
+                  <option value="Q1">Jan - Mar</option>
+                  <option value="Q2">Apr - Jun</option>
+                  <option value="Q3">Jul - Sep</option>
+                  <option value="Q4">Oct - Dec</option>
+                </select>
               </td>
               <td style={{ textAlign: "right" }}>Total Number of Records:</td>
               <td>

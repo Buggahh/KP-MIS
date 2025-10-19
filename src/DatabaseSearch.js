@@ -110,7 +110,8 @@ export function useDatabaseSearch(refreshKey = 0) {
   const filteredRows = useMemo(() => {
     let filtered = rows;
     if (year.trim()) {
-      filtered = filtered.filter(row => row.year === year.trim());
+      const q = year.trim();
+      filtered = filtered.filter(row => String(row.year || "").includes(q));
     }
     if (caseNumber.trim()) {
       filtered = filtered.filter(row => row.caseNumber.includes(caseNumber.trim()));

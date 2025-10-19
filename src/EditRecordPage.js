@@ -1,5 +1,5 @@
 import { db } from "./firebase";
-import { doc, updateDoc, setDoc, addDoc, collection } from "firebase/firestore";
+import { doc, updateDoc, setDoc, collection } from "firebase/firestore";
 
 // Accepts: caseNumber, editData (with all subcollections as arrays)
 export async function updateCaseRecord(caseNumber, editData) {
