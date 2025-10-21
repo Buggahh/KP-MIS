@@ -7,7 +7,7 @@ import uploadIcon from './icons/upload.png';
 import submitIcon from './icons/submit.png';
 import { submitNewCase } from "./SubmitCase";
 import { canWriteToFirestore } from "./RoleCheck";
-import { uploadFile } from "./FileUploadUtil";
+import { uploadFilesToCase } from "./FileUploadUtil";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 
@@ -394,17 +394,54 @@ function NewRecordPage({ onLogout }) {
   const [uploadError, setUploadError] = useState("");
   const [uploadedUrl, setUploadedUrl] = useState("");
 
-  const handleFileUpload = async (file) => {
-    setUploading(true);
-    setUploadError("");
-    try {
-      const url = await uploadFile(file, uploadType);
-      setUploadedUrl(url);
-      // Save the url to your case state if needed
-    } catch (err) {
-      setUploadError("Upload failed: " + err.message);
+  // Example handleFileUpload
+  const [uploadedFiles, setUploadedFiles] = useState([]); // array of { type, name, path, url }
+
+  const handleFileUpload = async (filesOrFile) => {
+    // Accept either a single File or FileList/Array<File>
+    const files = filesOrFile instanceof File ? [filesOrFile] : Array.from(filesOrFile || []);
+    if (!files || files.length === 0) return;
+
+    const caseId = complainantSection.caseIdNumber;
+    if (!caseId) {
+      setUploadError("Please set Case ID before uploading files.");
+      return;
     }
-    setUploading(false);
+
+    // map visible uploadType values to the canonical storage folder names
+    const typeMap = {
+      ComplaintSheet: "complaintSheet",
+      AmicableSettlement: "ammicableSettlement",
+      CertificateToFileAction: "certificateToFileAction",
+      Photo: "photo"
+    };
+    const type = typeMap[uploadType] || (uploadType ? uploadType : "complaintSheet");
+
+    try {
+      setUploading(true);
+      setUploadError("");
+
+      // Upload multiple files in one call
+      const results = await uploadFilesToCase(files, caseId, type);
+      // results: array of { url, path, name }
+
+      // attach type so caller knows each file type
+      const withType = results.map(r => ({ ...r, type }));
+
+      // append to uploadedFiles state (do NOT close modal automatically)
+      setUploadedFiles(prev => [...prev, ...withType]);
+
+      // Set uploadedUrl so the existing "Uploaded! View File" snippet shows.
+      // If multiple files were uploaded, show the first one (you can change to last if preferred)
+      if (withType.length > 0) {
+        setUploadedUrl(withType[0].url);
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+      setUploadError(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const dateTimeDateRef = useRef(null);   // date part of "Date & Time Filed"
@@ -1655,7 +1692,7 @@ function NewRecordPage({ onLogout }) {
               className="upload-icon"
               style={{ cursor: "pointer" }}
               tabIndex={0}
-              onClick={() => handleOpenUpload("complaintSheet")}
+              onClick={() => handleOpenUpload("ComplaintSheet")}
             />
             <span className="upload-label">Complaint Sheet</span>
           </li>
@@ -1666,7 +1703,7 @@ function NewRecordPage({ onLogout }) {
               className="upload-icon"
               style={{ cursor: "pointer" }}
               tabIndex={0}
-              onClick={() => handleOpenUpload("amicableSettlement")}
+              onClick={() => handleOpenUpload("AmicableSettlement")}
             />
             <span className="upload-label">Amicable Settlement</span>
           </li>
@@ -1677,7 +1714,7 @@ function NewRecordPage({ onLogout }) {
               className="upload-icon"
               style={{ cursor: "pointer" }}
               tabIndex={0}
-              onClick={() => handleOpenUpload("certificateToFileAction")}
+              onClick={() => handleOpenUpload("CertificateToFileAction")}
             />
             <span className="upload-label">Certificate to File Action</span>
           </li>
@@ -1688,7 +1725,7 @@ function NewRecordPage({ onLogout }) {
               className="upload-icon"
               style={{ cursor: "pointer" }}
               tabIndex={0}
-              onClick={() => handleOpenUpload("photo")}
+              onClick={() => handleOpenUpload("Photo")}
             />
             <span className="upload-label">Photo</span>
           </li>
@@ -1724,7 +1761,8 @@ function NewRecordPage({ onLogout }) {
         onDrop={async e => {
           e.preventDefault();
           if (e.dataTransfer.files.length) {
-            await handleFileUpload(e.dataTransfer.files[0]);
+            // pass the whole FileList to allow multiple files dropped
+            await handleFileUpload(e.dataTransfer.files);
           }
         }}
         onClick={() => document.getElementById("file-upload-input").click()}
@@ -1734,16 +1772,21 @@ function NewRecordPage({ onLogout }) {
           id="file-upload-input"
           type="file"
           accept="image/*,.pdf"
+          multiple               // <-- allow multi-select
           style={{display: "none"}}
           onChange={async e => {
             if (e.target.files.length) {
-              await handleFileUpload(e.target.files[0]);
+              await handleFileUpload(e.target.files);
+              // reset input so same files can be selected again if needed
+              e.target.value = null;
             }
           }}
         />
       </div>
       {uploading && <div style={{marginBottom: 8}}>Uploading...</div>}
       {uploadError && <div style={{color: "#e74c3c", marginBottom: 8}}>{uploadError}</div>}
+
+      {/* Keep the simple single-file success message (shows first uploaded file) */}
       {uploadedUrl && (
         <div style={{color: "#27ae60", marginBottom: 8}}>
           Uploaded! <a href={uploadedUrl} target="_blank" rel="noopener noreferrer">View File</a>
