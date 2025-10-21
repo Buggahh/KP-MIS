@@ -5,9 +5,9 @@ import { collection, getDocs, query, where, doc, getDoc } from "firebase/firesto
 import "./styles/NewRecordPage.css";
 import uploadIcon from './icons/upload.png';
 import submitIcon from './icons/submit.png';
-import { submitNewCase } from "./SubmitCase";
-import { canWriteToFirestore } from "./RoleCheck";
-import { uploadFilesToCase, deleteFilesAtPaths } from "./FileUploadUtil";
+import { submitNewCase } from "./utils/SubmitCase";
+import { canWriteToFirestore } from "./utils/RoleCheck";
+import { uploadFilesToCase, deleteFilesAtPaths } from "./utils/FileUploadUtil";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 
@@ -519,7 +519,7 @@ function NewRecordPage({ onLogout }) {
       if (fpTimeRef.current) { fpTimeRef.current.destroy(); fpTimeRef.current = null; }
       if (fpIncidentRef.current) { fpIncidentRef.current.destroy(); fpIncidentRef.current = null; }
     };
-  }, [complainantSection.dateTimeFiled]); // 👈 Re-run effect when date/time changes
+  });
 
   // Generic flatpickr initializer for other date/time fields (birthdates, case management, case status, compliance)
   const fpMapRef = useRef(new Map());

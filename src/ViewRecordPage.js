@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { db } from "./firebase";
-import {
-  doc,
-  getDoc,
-  collection,
-  getDocs
-} from "firebase/firestore";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import "./styles/NewRecordPage.css";
 import { updateCaseRecord } from "./EditRecordPage";
 import editIcon from './icons/edit.png';
-import { getStorage, ref as storageRef, listAll, getDownloadURL } from "firebase/storage";
 import ShowUploadedFile from "./utils/showUploadedFile";
 
 function formatTimestamp(ts) {

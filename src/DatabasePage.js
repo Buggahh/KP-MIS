@@ -4,8 +4,8 @@ import "./styles/DatabasePage.css";
 import printIcon from "./icons/print.png";
 import openIcon from "./icons/open.png";
 import deleteIcon from "./icons/delete.png";
-import { useDatabaseSearch } from "./DatabaseSearch";
-import { DatabaseDeleteRecord } from "./DatabaseDeleteRecord";
+import { useDatabaseSearch } from "./utils/DatabaseSearch";
+import { DatabaseDeleteRecord } from "./utils/DatabaseDeleteRecord";
 
 function DatabasePage({ onLogout }) {
   const [username] = useState(localStorage.getItem("loggedInUsername") || "");

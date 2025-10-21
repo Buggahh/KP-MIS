@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { db } from "./firebase";
+import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
 
 export function useDatabaseSearch(refreshKey = 0) {

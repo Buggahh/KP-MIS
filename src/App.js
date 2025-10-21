@@ -9,7 +9,7 @@ import NewRecordPage from "./NewRecordPage";
 import ReportsPage from "./ReportsPage";
 import DashboardPage from "./DashboardPage";
 import ViewRecordPage from "./ViewRecordPage";
-import ProtectedRoute from "./ProtectedRoute";
+import ProtectedRoute from "./utils/ProtectedRoute";
 import userIcon from './icons/user.png';
 import passwordIcon from './icons/password.png';
 import eyeOffIcon from './icons/eye.png';
