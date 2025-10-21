@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { db } from "./firebase";
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
@@ -7,7 +7,7 @@ import uploadIcon from './icons/upload.png';
 import submitIcon from './icons/submit.png';
 import { submitNewCase } from "./SubmitCase";
 import { canWriteToFirestore } from "./RoleCheck";
-import { uploadFilesToCase } from "./FileUploadUtil";
+import { uploadFilesToCase, deleteFilesAtPaths } from "./FileUploadUtil";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 
@@ -320,6 +320,10 @@ function NewRecordPage({ onLogout }) {
         },
         complainantSection.caseIdNumber
       );
+
+      setCaseSaved(true);
+      uploadedFilesRef.current = [];
+
       setComplainantSection(initialComplainantSection);
       setComplainants([
         {
@@ -394,8 +398,12 @@ function NewRecordPage({ onLogout }) {
   const [uploadError, setUploadError] = useState("");
   const [uploadedUrl, setUploadedUrl] = useState("");
 
-  // Example handleFileUpload
   const [uploadedFiles, setUploadedFiles] = useState([]); // array of { type, name, path, url }
+  const uploadedFilesRef = useRef(uploadedFiles);
+  const [caseSaved, setCaseSaved] = useState(false); // becomes true when case is successfully submitted
+
+  // keep ref synced with latest uploadedFiles so cleanup sees current list
+  useEffect(() => { uploadedFilesRef.current = uploadedFiles; }, [uploadedFiles]);
 
   const handleFileUpload = async (filesOrFile) => {
     // Accept either a single File or FileList/Array<File>
@@ -660,6 +668,28 @@ function NewRecordPage({ onLogout }) {
   }, [complainantSection.dateTimeFiled, complainantSection.dateOfIncident,
       complainants, respondents, mediationRows, conciliationRows, arbitrationRows, ammicableRows, caseStatusRows]);
 
+  useEffect(() => {
+    let cleanupAllowed = true;
+
+    return () => {
+      // Only clean up if the case is NOT saved
+      if (
+        cleanupAllowed &&
+        !caseSaved &&
+        uploadedFilesRef.current &&
+        uploadedFilesRef.current.length > 0
+      ) {
+        const paths = uploadedFilesRef.current.map(f => f.path).filter(Boolean);
+        if (paths.length > 0) {
+          console.log("🧹 Cleaning up uploaded files (unsaved):", paths);
+          deleteFilesAtPaths(paths)
+            .then(results => console.log("Delete results:", results))
+            .catch(err => console.error("Error deleting uploaded files:", err));
+        }
+      }
+    };
+  }, [caseSaved]);
+
   return (
     <div className="new-record-page">
       {/* Loading overlay */}
@@ -735,6 +765,7 @@ function NewRecordPage({ onLogout }) {
         {errorMessage}
         </div>
       )}
+
       {/* Header */}
       <header className="header-container">
         {/* Top Row */}
@@ -1571,6 +1602,7 @@ function NewRecordPage({ onLogout }) {
                         <input
                           type="text"
                           value={row.mainPoint}
+                          noCalendar = "false"
                           onChange={e => handleCaseStatusChange(idx, "mainPoint", e.target.value)}
                           className="case-status-input"
                           placeholder="Enter main point of agreement/award"

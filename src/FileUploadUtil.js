@@ -1,4 +1,4 @@
-import { getStorage, ref, uploadBytes, getDownloadURL, listAll } from "firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL, listAll, deleteObject } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -87,6 +87,62 @@ export async function uploadFilesToCase(files, caseId, type = "file") {
   // Run uploads in parallel (Promise.all)
   const results = await Promise.all(uploadPromises);
   return results;
+}
+
+/**
+ * Delete a single file by its storage path (e.g. "casesDocuments/{caseId}/{type}/{name}")
+ * Returns { path, success: true } or { path, success: false, error }
+ */
+export async function deleteFileAtPath(path) {
+  if (!path) return { path, success: false, error: new Error("No path provided") };
+  const storage = getStorage();
+  const fileRef = ref(storage, path);
+  try {
+    await deleteObject(fileRef);
+    return { path, success: true };
+  } catch (error) {
+    // return the error for caller to inspect/log
+    return { path, success: false, error };
+  }
+}
+
+/**
+ * Delete multiple files given an array of storage paths.
+ * Returns Promise<Array<{path, success, error?}>> (one result per path)
+ */
+export async function deleteFilesAtPaths(paths = []) {
+  if (!Array.isArray(paths) || paths.length === 0) return [];
+  const results = await Promise.all(
+    paths.map(async (p) => {
+      try {
+        return await deleteFileAtPath(p);
+      } catch (err) {
+        return { path: p, success: false, error: err };
+      }
+    })
+  );
+  return results;
+}
+
+/**
+ * Delete everything inside a "folder" path by listing and deleting each item (recurses into prefixes).
+ * e.g. deleteFolder("casesDocuments/{caseId}/{type}")
+ */
+export async function deleteFolder(folderPath) {
+  if (!folderPath) return { folderPath, success: false, error: new Error("No folderPath") };
+  const storage = getStorage();
+  const folderRef = ref(storage, folderPath);
+  try {
+    const listResult = await listAll(folderRef);
+    // delete all files in this folder
+    const itemDeletes = listResult.items.map((itemRef) => deleteObject(itemRef));
+    // recursively delete subfolders
+    const prefixDeletes = listResult.prefixes.map((prefixRef) => deleteFolder(prefixRef.fullPath));
+    await Promise.all([...itemDeletes, ...prefixDeletes]);
+    return { folderPath, success: true };
+  } catch (error) {
+    return { folderPath, success: false, error };
+  }
 }
 
 /* Helpers (keep existing helpers or add if missing) */
