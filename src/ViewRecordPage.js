@@ -10,7 +10,8 @@ import {
 import "./styles/NewRecordPage.css";
 import { updateCaseRecord } from "./EditRecordPage";
 import editIcon from './icons/edit.png';
-import uploadIcon from './icons/upload.png';
+import { getStorage, ref as storageRef, listAll, getDownloadURL } from "firebase/storage";
+import ShowUploadedFile from "./utils/showUploadedFile";
 
 function formatTimestamp(ts) {
   if (!ts) return "";
@@ -1576,66 +1577,11 @@ useEffect(() => {
           </table>
         </div>
       </div>
-
-      {/* Uploads */}
-      <div className="newrecord-main-content" style = {{ marginBottom: "70px" }}>
-        <h1 style={{ color: 'red' }}>Uploads</h1>
-        <ul className="uploads-list">
-          <li>
-            <img
-              src={uploadIcon}
-              alt="Upload File"
-              className="upload-icon"
-              style={{ cursor: "default" }}
-              tabIndex={-1}
-            />
-            <span className="upload-label">Complaint Sheet</span>
-            {data.uploads?.complaintSheet && (
-              <a href={data.uploads.complaintSheet} target="_blank" rel="noopener noreferrer" style={{marginLeft: 8}}>View</a>
-            )}
-          </li>
-          <li>
-            <img
-              src={uploadIcon}
-              alt="Upload File"
-              className="upload-icon"
-              style={{ cursor: "default" }}
-              tabIndex={-1}
-            />
-            <span className="upload-label">Amicable Settlement</span>
-            {data.uploads?.amicableSettlement && (
-              <a href={data.uploads.amicableSettlement} target="_blank" rel="noopener noreferrer" style={{marginLeft: 8}}>View</a>
-            )}
-          </li>
-          <li>
-            <img
-              src={uploadIcon}
-              alt="Upload File"
-              className="upload-icon"
-              style={{ cursor: "default" }}
-              tabIndex={-1}
-            />
-            <span className="upload-label">Certificate to File Action</span>
-            {data.uploads?.certificateToFileAction && (
-              <a href={data.uploads.certificateToFileAction} target="_blank" rel="noopener noreferrer" style={{marginLeft: 8}}>View</a>
-            )}
-          </li>
-          <li>
-            <img
-              src={uploadIcon}
-              alt="Upload File"
-              className="upload-icon"
-              style={{ cursor: "default" }}
-              tabIndex={-1}
-            />
-            <span className="upload-label">Photo</span>
-            {data.uploads?.photo && (
-              <a href={data.uploads.photo} target="_blank" rel="noopener noreferrer" style={{marginLeft: 8}}>View</a>
-            )}
-          </li>
-        </ul>
-      </div>
       
+      {/* Uploads (rendered by showUploadedFile component) */}
+      { /* pass caseNumber (from useParams) */ }
+      <ShowUploadedFile caseNumber={caseNumber} />
+
       {/* Submitting overlay */}
       {loading && (
         <div style={{
