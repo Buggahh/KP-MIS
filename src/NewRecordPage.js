@@ -902,7 +902,7 @@ function NewRecordPage({ onLogout }) {
           <table className="complainant-table right">
             <tbody>
               <tr>
-                <td className="complainant-label" style={{ width: "20%" }}>
+                <td className="complainant-label">
                   Nature of Complaint
                 </td>
                 <td>
@@ -1771,23 +1771,60 @@ function NewRecordPage({ onLogout }) {
         </button>
       </div>
 
-      {showUploadModal && (
-  <div style={{
-    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-    background: "rgba(0,0,0,0.4)", zIndex: 9999,
-    display: "flex", alignItems: "center", justifyContent: "center"
-  }}>
-    <div style={{
-      background: "#fff", borderRadius: "12px", padding: "32px 40px",
-      minWidth: "340px", minHeight: "220px", boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
-      display: "flex", flexDirection: "column", alignItems: "center"
-    }}>
-      <h2 style={{marginBottom: 16}}>Upload {uploadType.replace(/([A-Z])/g, ' $1')}</h2>
+{showUploadModal && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.4)",
+      zIndex: 9999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}
+    // Close when clicking the overlay (but not when clicking inside the dialog)
+    onMouseDown={e => {
+      // only close when the click is on the overlay itself
+      if (e.target === e.currentTarget) {
+        // don't close while uploading
+        if (!uploading) setShowUploadModal(false);
+      }
+    }}
+  >
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: "12px",
+        padding: "32px 40px",
+        minWidth: "340px",
+        minHeight: "220px",
+        boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center"
+      }}
+      // prevent accidental closing on mousedown inside the dialog (redundant because overlay check uses target===currentTarget)
+      onMouseDown={e => e.stopPropagation()}
+    >
+      <h2 style={{ marginBottom: 16 }}>
+        Upload {uploadType.replace(/([A-Z])/g, " $1")}
+      </h2>
+
       <div
         style={{
-          border: "2px dashed #bbb", borderRadius: "8px", width: 260, height: 120,
-          display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16,
-          background: "#fafafa", cursor: "pointer"
+          border: "2px dashed #bbb",
+          borderRadius: "8px",
+          width: 260,
+          height: 120,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 16,
+          background: "#fafafa",
+          cursor: "pointer"
         }}
         onDragOver={e => e.preventDefault()}
         onDrop={async e => {
@@ -1799,13 +1836,17 @@ function NewRecordPage({ onLogout }) {
         }}
         onClick={() => document.getElementById("file-upload-input").click()}
       >
-        <span style={{color: "#888"}}>Drag & drop file here<br />or click to select</span>
+        <span style={{ color: "#888" }}>
+          Drag & drop file here
+          <br />
+          or click to select
+        </span>
         <input
           id="file-upload-input"
           type="file"
           accept="image/*,.pdf"
-          multiple               // <-- allow multi-select
-          style={{display: "none"}}
+          multiple
+          style={{ display: "none" }}
           onChange={async e => {
             if (e.target.files.length) {
               await handleFileUpload(e.target.files);
@@ -1815,19 +1856,31 @@ function NewRecordPage({ onLogout }) {
           }}
         />
       </div>
-      {uploading && <div style={{marginBottom: 8}}>Uploading...</div>}
-      {uploadError && <div style={{color: "#e74c3c", marginBottom: 8}}>{uploadError}</div>}
+
+      {uploading && <div style={{ marginBottom: 8 }}>Uploading...</div>}
+      {uploadError && (
+        <div style={{ color: "#e74c3c", marginBottom: 8 }}>{uploadError}</div>
+      )}
 
       {/* Keep the simple single-file success message (shows first uploaded file) */}
       {uploadedUrl && (
-        <div style={{color: "#27ae60", marginBottom: 8}}>
-          Uploaded! <a href={uploadedUrl} target="_blank" rel="noopener noreferrer">View File</a>
+        <div style={{ color: "#27ae60", marginBottom: 8 }}>
+          Uploaded!{" "}
+          <a href={uploadedUrl} target="_blank" rel="noopener noreferrer">
+            View File
+          </a>
         </div>
       )}
+
       <button
         style={{
-          marginTop: 8, background: "#ed1c26", color: "#fff", border: "none",
-          padding: "8px 18px", borderRadius: "6px", cursor: "pointer"
+          marginTop: 8,
+          background: "#ed1c26",
+          color: "#fff",
+          border: "none",
+          padding: "8px 18px",
+          borderRadius: "6px",
+          cursor: uploading ? "not-allowed" : "pointer"
         }}
         onClick={() => setShowUploadModal(false)}
         disabled={uploading}
