@@ -120,6 +120,11 @@ function ViewRecordPage({ onLogout }) {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Protect against race where a delayed timeout clears editData while user re-enters edit
+  const isEditingRef = useRef(isEditing);
+  const submitClearTimeoutRef = useRef(null);
+  useEffect(() => { isEditingRef.current = isEditing; }, [isEditing]);
+
   // When entering edit mode, copy the current data to editData
   const handleEditClick = () => {
     setEditData({
@@ -129,7 +134,11 @@ function ViewRecordPage({ onLogout }) {
       mediationRows: mediationRows.map(m => ({ ...m })),
       conciliationRows: conciliationRows.map(c => ({ ...c })),
       arbitrationRows: arbitrationRows.map(a => ({ ...a })),
-      caseStatusRows: caseStatusRows.map(s => ({ ...s })),
+      // IMPORTANT: initialize selectedStatus from status so it is never undefined in edit mode
+      caseStatusRows: caseStatusRows.map(s => ({
+        ...s,
+        selectedStatus: s.status ?? ""
+      })),
       ammicableRows: ammicableRows.map(a => ({ ...a }))
     });
     setIsEditing(true);
@@ -264,9 +273,13 @@ function ViewRecordPage({ onLogout }) {
       })();
 
       // exit edit mode after short delay so user sees success toast
-      setTimeout(() => {
+      // ONLY clear editData if the user did not re-enter edit mode
+      submitClearTimeoutRef.current = setTimeout(() => {
         setShowSuccess(false);
-        setEditData(null);
+        // don't clobber editData if user re-entered edit mode
+        if (!isEditingRef.current) {
+          setEditData(null);
+        }
         setSubmitting(false);
       }, 1400);
     } catch (err) {
@@ -317,6 +330,29 @@ function ViewRecordPage({ onLogout }) {
   };
   
 const caseStatusArr = isEditing ? (editData?.caseStatusRows ?? []) : caseStatusRows;
+
+// useEffect(() => {
+
+//   const id = setInterval(() => {
+//     try {
+//       const rows = (caseStatusArr || []).map((r, i) => ({
+//         idx: i,
+//         status: r?.status,
+//         selectedStatus: r?.selectedStatus
+//       }));
+//       // Clear, then print detailed info so both fields are obvious
+//       console.log("CaseStatus debug (every 5s):", rows);
+//       console.table(rows);
+//       rows.forEach(row =>
+//         console.log(`caseStatus[${row.idx}] status="${row.status}" selectedStatus="${row.selectedStatus}"`)
+//       );
+//     } catch (err) {
+//       console.error("CaseStatus debug error:", err);
+//     }
+//   }, 1000);
+
+//   return () => clearInterval(id);
+// }, [isEditing, caseStatusArr]);
 
 const dateTimeDateRef = useRef(null);   // date part of "Date & Time Filed"
 const dateTimeTimeRef = useRef(null);   // time part of "Date & Time Filed"
@@ -1238,6 +1274,7 @@ useEffect(() => {
                         data-idx={idx}
                         value={row.date || ""}
                         onChange={e => handleEditArrayChange("mediationRows", idx, "date", e.target.value)}
+                        placeholder = "Select Date"
                       />
                     ) : (
                       <span >{row.date}</span>
@@ -1253,6 +1290,7 @@ useEffect(() => {
                         data-idx={idx}
                         value={row.time || ""}
                         onChange={e => handleEditArrayChange("mediationRows", idx, "time", e.target.value)}
+                        placeholder = "Select Time"
                       />
                     ) : (
                       <span>{row.time}</span>
@@ -1316,6 +1354,7 @@ useEffect(() => {
                         data-idx={idx}
                         value={row.date || ""}
                         onChange={e => handleEditArrayChange("conciliationRows", idx, "date", e.target.value)}
+                        placeholder = "Select Date"
                       />
                     ) : (
                       <span>{row.date}</span>
@@ -1331,6 +1370,7 @@ useEffect(() => {
                         data-idx={idx}
                         value={row.time || ""}
                         onChange={e => handleEditArrayChange("conciliationRows", idx, "time", e.target.value)}
+                        placeholder = "Select Time"
                       />
                     ) : (
                       <span>{row.time}</span>
@@ -1394,6 +1434,7 @@ useEffect(() => {
                         data-idx={idx}
                         value={row.date || ""}
                         onChange={e => handleEditArrayChange("arbitrationRows", idx, "date", e.target.value)}
+                        placeholder = "Select Date"
                       />
                     ) : (
                       <span>{row.date}</span>
@@ -1409,6 +1450,7 @@ useEffect(() => {
                         data-idx={idx}
                         value={row.time || ""}
                         onChange={e => handleEditArrayChange("arbitrationRows", idx, "time", e.target.value)}
+                        placeholder = "Select Time"
                       />
                     ) : (
                       <span>{row.time}</span>
@@ -1460,9 +1502,8 @@ useEffect(() => {
         {caseStatusArr.length === 0 && <div>No case status information.</div>}
 
         {caseStatusArr.map((row, idx) => {
-          // Safely initialize selectedStatus (without mutating the original array)
-          const selectedStatus = row.selectedStatus ?? row.status ?? "";
-          const currentStatus = selectedStatus;
+          row.selectedStatis = row.status;
+          const currentStatus = row.selectedStatis;
 
           return (
             <div
@@ -1491,6 +1532,8 @@ useEffect(() => {
                             value={row.statusDate || ""}
                             onChange={(e) => handleCaseStatusChange(idx, "statusDate", e.target.value)}
                             style={{ width: "70%" }}
+                            placeholder = "Select Date"
+                            noCalendar = "False"
                           />
                         ) : (
                           <span>{row.statusDate}</span>
@@ -1710,6 +1753,8 @@ useEffect(() => {
                               value={row.executionDate || ""}
                               onChange={(e) => handleCaseStatusChange(idx, "executionDate", e.target.value)}
                               style={{ width: "60%" }}
+                              placeholder = "Select Date"
+                              noCalendar = "False"
                             />
                           ) : (
                             <span>{row.executionDate}</span>
@@ -1766,6 +1811,7 @@ useEffect(() => {
                         value={row.date || ""}
                         onChange={e => handleEditArrayChange("ammicableRows", idx, "date", e.target.value)}
                         style={{ width: "70%" }}
+                        placeholder = "Select Date"
                       />
                     ) : (
                       <span>{row.date}</span>
