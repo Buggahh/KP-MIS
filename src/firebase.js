@@ -1,19 +1,18 @@
-// src/firebase.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCmSK7Yzax0IkIXJKxJ8ok0RaLxYfgE7e8",
-  authDomain: "barangay-balibago-case-portal.firebaseapp.com",
-  projectId: "barangay-balibago-case-portal",
-  storageBucket: "barangay-balibago-case-portal.firebasestorage.app",
-  messagingSenderId: "330857228279",
-  appId: "1:330857228279:web:e4d8c29d1a66b4326b30f2",
-  measurementId: "G-KT492NK79Q"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// ✅ Initialize Firestore and export it
 export const db = getFirestore(app);
+export const storage = getStorage(app);
