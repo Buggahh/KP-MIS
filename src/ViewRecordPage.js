@@ -316,22 +316,7 @@ function ViewRecordPage({ onLogout }) {
     }));
   };
   
-    const caseStatusArr = isEditing ? editData.caseStatusRows : caseStatusRows;
-
-useEffect(() => {
-  const interval = setInterval(() => {
-    // Log all selectedStatus and status for caseStatusArr
-    caseStatusArr.forEach((row, idx) => {
-      console.log(
-        `Case Status Row ${idx}: selectedStatus = ${row.selectedStatus}, status = ${row.status}`
-      );
-    });
-  }, 10000); // 10 seconds
-
-  return () => clearInterval(interval);
-}, [caseStatusArr]);
-
-  // --- add inside the component function, after your state declarations ---
+const caseStatusArr = isEditing ? (editData?.caseStatusRows ?? []) : caseStatusRows;
 
 const dateTimeDateRef = useRef(null);   // date part of "Date & Time Filed"
 const dateTimeTimeRef = useRef(null);   // time part of "Date & Time Filed"
@@ -1076,8 +1061,8 @@ useEffect(() => {
                     <select
                       style={{ width: "95%" }}
                       className="newrecord-input"
-                      value={c.sex}
-                      onChange={e => handleEditArrayChange("respondents", "sex", e.target.value)}
+                      value={c.sex || ""}
+                      onChange={e => handleEditArrayChange("respondents", idx, "sex", e.target.value)}
                     >
                       <option value="">Select</option>
                       <option value="Male">Male</option>
